@@ -1,8 +1,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "memory.h"
 #include "io.h"
+#include "string.h"
+#include "memory.h"
 
 static const size_t header_len = sizeof(malloc_header_t);
 static malloc_header_t* head = NULL;
@@ -17,6 +18,8 @@ void init_mem(void* ptr, size_t size) {
 
 // lame first-fit allocator
 void* malloc(size_t size) {
+    if (!size) return NULL;
+    // align size to 4 bytes
     if (size & 0b11) size = (size & ~0b11) + 4;
     malloc_header_t* ptr = head;
     while (ptr) {
@@ -50,6 +53,22 @@ void free(void* ptr) {
         entry->prev->length += header_len + entry->length;
         entry->prev->next = entry->next;
     }
+}
+
+void* calloc(size_t num, size_t size) {
+    void* buf = malloc(num * size);
+    if (buf) memset(buf, 0, num * size);
+    return buf;
+}
+
+void* realloc(void* ptr, size_t size) {
+    if (!ptr) return malloc(size);
+    void* buf = malloc(size);
+    if (!buf) return NULL;
+    malloc_header_t* entry = (malloc_header_t*) ((unsigned char*) ptr - header_len);
+    memcpy(buf, ptr, entry->length);
+    free(ptr);
+    return buf;
 }
 
 void dump_heap(void) {
