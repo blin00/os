@@ -1,0 +1,6 @@
+*.o
+*.elf
+*.log
+*log.txt
+*.iso
+tools
