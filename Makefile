@@ -1,10 +1,10 @@
-OBJECTS = boot.o kernel.o io.o util.o interrupt.o interrupt_asm.o string.o
-CC = i686-elf-gcc
-CFLAGS = -c -ffreestanding -fno-stack-protector -Wall -Wextra -O3
-LD = i686-elf-gcc
-LDFLAGS = -T link.ld -ffreestanding -O3 -nostdlib -lgcc
-AS = nasm
-ASFLAGS = -f elf32
+OBJECTS=boot.o kernel.o io.o util.o interrupt.o interrupt_asm.o string.o memory.o
+CC=i686-elf-gcc
+CFLAGS=-c -ffreestanding -fno-stack-protector -Wall -Wextra -O3
+LD=i686-elf-gcc
+LDFLAGS=-T link.ld -ffreestanding -O3 -nostdlib -lgcc
+AS=nasm
+ASFLAGS=-f elf32
 
 all: kernel.elf os.iso
 

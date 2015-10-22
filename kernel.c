@@ -4,6 +4,7 @@
 #include "io.h"
 #include "util.h"
 #include "interrupt.h"
+#include "memory.h"
 
 /*
 void build_idt(void) {
@@ -25,9 +26,15 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
         return;
     }
     multiboot_info_t* mb_info = (multiboot_info_t*) info;
+    if (mb_info->flags & (1 << 9)) {
+        printf("kernel booted by %s\n", mb_info->boot_loader_name);
+    }
+    if (!(mb_info->flags & (1 << 6))) {
+        printf("error: no memory map.\n");
+        return;
+    }
     uint32_t free_start = kernel_end, free_end = 0;
     printf("memory map:\n");
-    printf("lower: %u KB\nupper: %u KB\n", mb_info->mem_lower, mb_info->mem_upper);
     uint32_t mmap_ptr = mb_info->mmap_addr;
     while (mmap_ptr < mb_info->mmap_addr + mb_info->mmap_length) {
         multiboot_memory_map_t* mb_mmap = (multiboot_memory_map_t*) mmap_ptr;
@@ -41,13 +48,13 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
         putc('\n');
         mmap_ptr += mb_mmap->size + 4;
     }
+    if (!free_end) {
+        printf("error: unable to detect usable memory.\n");
+        return;
+    }
     printf("using mem: 0x%x-0x%x\n", free_start, free_end);
+    init_mem((void*) free_start, free_end - free_start + 1);
     setup_int();
-    /*while (1) {
-        uint32_t upper;
-        uint32_t lower = _rdtsc(&upper);
-        printf("0x%x%x\n", upper, lower);
-    }*/
     printf("init done - press ESC to reboot\n");
     BOCHS_BREAK;
     while (1) {

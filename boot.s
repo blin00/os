@@ -6,7 +6,7 @@ extern kmain
 extern _kernel_end
 
 MAGIC_NUMBER        equ 0x1BADB002     ; define the magic number constant
-MULTIB00T_FLAGS     equ 111b           ; multiboot flags
+MULTIB00T_FLAGS     equ 11b           ; multiboot flags
 CHECKSUM            equ -(MAGIC_NUMBER + MULTIB00T_FLAGS)  ; (magic number + checksum + flags should equal 0)
 KERNEL_STACK_SIZE   equ 16384
 

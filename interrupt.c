@@ -55,12 +55,12 @@ void interrupt_handler(cpu_state_t cpu, uint32_t interrupt, stack_state_t stack)
         if (interrupt != 3) {
             printf("\n***** kernel panic *****\n");
             printf("unexpected exception 0x%hhx\n", interrupt);
-            printf("eip: 0x%x\n", stack.eip);
+            printf("eip: 0x%x esp: 0x%x\n", stack.eip, cpu.esp);
             BOCHS_BREAK;
             asm volatile("jmp _halt");
         } else {
             printf("\n***** kernel int3 *****\n");
-            printf("eip: 0x%x\n", stack.eip);
+            printf("eip: 0x%x esp: 0x%x\n", stack.eip, cpu.esp);
             BOCHS_BREAK;
         }
         return;

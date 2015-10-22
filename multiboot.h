@@ -1,3 +1,6 @@
+#ifndef MULTIBOOT_H
+#define MULTIBOOT_H
+
 /* The section header table for ELF. */
 struct __attribute__((packed)) multiboot_elf_section_header_table
 {
@@ -64,3 +67,5 @@ struct __attribute__((packed)) multiboot_mmap_entry
     uint32_t type;
 };
 typedef struct multiboot_mmap_entry multiboot_memory_map_t;
+
+#endif

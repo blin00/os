@@ -4,3 +4,5 @@
 *log.txt
 *.iso
 tools
+*dbg.ini
+

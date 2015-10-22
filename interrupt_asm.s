@@ -37,7 +37,6 @@ ICW1_ICW4 equ 0x01
 ICW1_INIT equ 0x10
 ICW4_8086 equ 0x01
 
-
 section .text
 build_idt:
 %assign i 0

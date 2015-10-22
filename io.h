@@ -2,6 +2,7 @@
 #define IO_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 enum vga_color {
     COLOR_BLACK = 0,
