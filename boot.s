@@ -10,12 +10,13 @@ MULTIB00T_FLAGS     equ 11b           ; multiboot flags
 CHECKSUM            equ -(MAGIC_NUMBER + MULTIB00T_FLAGS)  ; (magic number + checksum + flags should equal 0)
 KERNEL_STACK_SIZE   equ 16384
 
-section .text                   ; start of the text (code) section
+section .multiboot
 align 4                         ; header must be 4 byte aligned
     dd MAGIC_NUMBER
     dd MULTIB00T_FLAGS
     dd CHECKSUM
 
+section .text
 _start:
 ; set up our own gdt
     lgdt [gdtr]

@@ -3,31 +3,26 @@
 #include "multiboot.h"
 #include "io.h"
 #include "util.h"
+#include "string.h"
 #include "interrupt.h"
 #include "memory.h"
-
-/*
-void build_idt(void) {
-    idt_entry_t* x = &idt[42];
-    uint32_t handler_addr = (uint32_t) interrupt_handler_42;
-    x->offset_1 = handler_addr & 0xffff;
-    x->selector = 0x08;
-    // x->zero = 0; // .bss segment zeroed out by GRUB
-    x->type_attr = 0x8f;
-    x->offset_2 = (handler_addr >> 16) & 0xffff;
-    setup_idt();
-}
-*/
+#include "random.h"
 
 void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
-    fb_init();
+    fb_init(80, 25);
     if (magic != 0x2BADB002) {
         printf("error: kernel not loaded by multiboot.\n");
         return;
     }
+    rand_init();
     multiboot_info_t* mb_info = (multiboot_info_t*) info;
     if (mb_info->flags & (1 << 9)) {
-        printf("kernel booted by %s\n", mb_info->boot_loader_name);
+        char* name = (char*) mb_info->boot_loader_name;
+        size_t len = strlen(name);
+        if (len > 0) {
+            rand_add_random_event(name, len > 32 ? 32 : len, 255, 0);
+            printf("kernel booted by %s\n", name);
+        }
     }
     if (!(mb_info->flags & (1 << 6))) {
         printf("error: no memory map.\n");

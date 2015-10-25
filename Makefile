@@ -1,4 +1,4 @@
-OBJECTS=boot.o kernel.o io.o util.o interrupt.o interrupt_asm.o string.o memory.o
+OBJECTS=boot.o kernel.o io.o util.o vga.o interrupt.o interrupt_asm.o string.o memory.o random.o sha256.o aes.o
 CC=i686-elf-gcc
 CFLAGS=-c -ffreestanding -fno-stack-protector -Wall -Wextra -O3
 LD=i686-elf-gcc
@@ -17,6 +17,9 @@ os.iso: kernel.elf
 
 run: kernel.elf
 	qemu-system-i386 -kernel kernel.elf
+
+bochs: os.iso
+	bochs -q
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@

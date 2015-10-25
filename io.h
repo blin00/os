@@ -28,8 +28,9 @@ void putc(char c);
 void puts(const char* str);
 void putu(uint32_t num);
 void putlu(uint64_t num);
+void putbytes(void* ptr, size_t num);
 void printf(const char* fmt, ...);
-void fb_init(void);
+void fb_init(size_t width, size_t height);
 void fb_clear(void);
 void fb_scroll(size_t amt);
 

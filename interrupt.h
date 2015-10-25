@@ -57,6 +57,8 @@ struct __attribute__((packed)) stack_state {
 typedef struct stack_state stack_state_t;
 
 extern idt_entry_t idt[256];
+extern volatile uint32_t timer_ticks;
+extern volatile uint32_t rtc_ticks;
 
 void setup_int(void);
 void build_idt(void);

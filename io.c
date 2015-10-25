@@ -6,9 +6,12 @@
 #include "util.h"
 #include "string.h"
 
+static size_t WIDTH;
+static size_t HEIGHT;
+
 static volatile uint16_t* fb = (uint16_t*) 0xb8000;
-static size_t row = 0;
-static size_t col = 0;
+static size_t row;
+static size_t col;
 static uint16_t port;
 
 static char num_to_hex_lower[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
@@ -20,13 +23,13 @@ static void _putc(size_t loc, char c);
 
 static void set_cursor(size_t loc) {
     outb(port, 14);
-    outb(port + 1, (uint8_t) (loc >> 8));     // high byte
+    outb(port + 1, (uint8_t) (loc >> 8));       // high byte
     outb(port, 15);
-    outb(port + 1, (uint8_t) loc);             // low byte
+    outb(port + 1, (uint8_t) loc);              // low byte
 }
 
 static void update_cursor(void) {
-    set_cursor(row * 80 + col);
+    set_cursor(row * WIDTH + col);
 }
 
 static void _putc(size_t loc, char c) {
@@ -41,15 +44,15 @@ void write(const char* buf, size_t count) {
             row++;
             col = 0;
         } else {
-            _putc(row * 80 + col, c);
-            if (++col >= 80) {
+            _putc(row * WIDTH + col, c);
+            if (++col >= WIDTH) {
                 row++;
                 col = 0;
             }
         }
-        if (row >= 25) {
-            row = 24;
-            fb_scroll(80);
+        if (row >= HEIGHT) {
+            row = HEIGHT - 1;
+            fb_scroll(WIDTH);
         }
     }
     update_cursor();
@@ -77,6 +80,14 @@ void putlu(uint64_t num) {
     else {
         if (num >= 10) putlu(num / 10);
         putc('0' + num % 10);
+    }
+}
+
+void putbytes(void* ptr, size_t num) {
+    uint8_t* buf = (uint8_t*) ptr;
+    for (size_t i = 0; i < num; i++) {
+        putc(num_to_hex_lower[(buf[i] >> 4) & 0xf]);
+        putc(num_to_hex_lower[buf[i] & 0xf]);
     }
 }
 
@@ -133,22 +144,25 @@ look_at_type:
     va_end(args);
 }
 
-void fb_init(void) {
+void fb_init(size_t width, size_t height) {
     port = *(uint16_t*) 0x0463;
+    WIDTH = width;
+    HEIGHT = height;
     fb_clear();
 }
 
 void fb_clear(void) {
-    for (size_t i = 0; i < 80 * 25; i++) _putc(i, ' ');
+    for (size_t i = 0; i < WIDTH * HEIGHT; i++) _putc(i, ' ');
+    row = col = 0;
     set_cursor(0);
 }
 
 void fb_scroll(size_t amt) {
     size_t i;
-    for (i = 0; i < 80 * 25 - amt; i++) {
+    for (i = 0; i < WIDTH * HEIGHT - amt; i++) {
         fb[i] = fb[i + amt];
     }
-    for(; i < 80 * 25; i++) {
+    for(; i < WIDTH * HEIGHT; i++) {
         _putc(i, ' ');
     }
 }
