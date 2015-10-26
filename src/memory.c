@@ -45,6 +45,7 @@ void free(void* ptr) {
     malloc_header_t* entry = (malloc_header_t*) ((unsigned char*) ptr - header_len);
     entry->used = false;
     // merge adjacent blocks
+    // assumes that two adjacent blocks are right after each other in memory
     if (entry->next && !entry->next->used) {
         entry->length += header_len + entry->next->length;
         entry->next = entry->next->next;

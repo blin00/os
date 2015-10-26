@@ -20,7 +20,7 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
         char* name = (char*) mb_info->boot_loader_name;
         size_t len = strlen(name);
         if (len > 0) {
-            rand_add_random_event(name, len > 32 ? 32 : len, 255, 0);
+            rand_add_random_event((uint8_t*) name, len > 32 ? 32 : len, 255, 0);
             printf("kernel booted by %s\n", name);
         }
     }

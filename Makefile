@@ -1,12 +1,21 @@
-OBJECTS=boot.o kernel.o io.o util.o vga.o interrupt.o interrupt_asm.o string.o memory.o random.o sha256.o aes.o
+C_SRCS=$(wildcard src/*.c)
+ASM_SRCS=$(wildcard src/*.s)
+OBJECTS=$(C_SRCS:.c=.o) $(ASM_SRCS:.s=.o)
+DEPS=$(patsubst src/%.c,dep/%.d,$(C_SRCS))
 CC=i686-elf-gcc
-CFLAGS=-c -ffreestanding -fno-stack-protector -Wall -Wextra -O3
+CFLAGS=-ffreestanding -fno-stack-protector -Wall -Wextra -O3
 LD=i686-elf-gcc
 LDFLAGS=-T link.ld -ffreestanding -O3 -nostdlib -lgcc
 AS=nasm
 ASFLAGS=-f elf32
 
-all: kernel.elf os.iso
+.PHONY: all kernel iso run bochs clean
+
+all: kernel iso
+
+kernel: kernel.elf
+
+iso: os.iso
 
 kernel.elf: $(OBJECTS)
 	$(LD) $(OBJECTS) $(LDFLAGS) -o kernel.elf
@@ -22,10 +31,13 @@ bochs: os.iso
 	bochs -q
 
 %.o: %.c
-	$(CC) $(CFLAGS) $< -o $@
+	@mkdir -p dep
+	$(CC) -MMD -MP -MF $(patsubst src/%.o,dep/%.d,$@) -c $(CFLAGS) $< -o $@
 
 %.o: %.s
 	$(AS) $(ASFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o *.iso *.elf iso/boot/*.elf
+	rm -rf src/*.o dep *.iso *.elf iso/boot/*.elf
+
+-include $(DEPS)

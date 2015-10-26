@@ -26,7 +26,7 @@ _rdtsc:
     ;test ecx, ecx
     ;jz .ret
     ;mov [ecx], edx
-.ret:
+;.ret:
     ret
 
 _rdrand:

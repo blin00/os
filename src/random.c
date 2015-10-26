@@ -117,7 +117,6 @@ static void rand_rdtsc(void) {
 }
 
 void rand_on_rtc(uint32_t timer_ticks, uint32_t rtc_ticks) {
-    //static uint8_t last = 0xff;
     static uint32_t num = 0;
     static uint8_t total = 0;
     static uint8_t pool = 0;
@@ -130,7 +129,7 @@ void rand_on_rtc(uint32_t timer_ticks, uint32_t rtc_ticks) {
         num = 0;
         total = 0;
     }
-    if (!(rtc_ticks & 0b11111)) {
+    if (!prng_state.reseeds || !(rtc_ticks & 0b11111)) {
         rand_rdseed();
         rand_rdtsc();
     }
