@@ -26,17 +26,6 @@ global _triple_fault
 
 extern interrupt_handler
 
-PIC1 equ 0x20
-PIC2 equ 0xa0
-PIC1_CMD equ PIC1
-PIC2_CMD equ PIC2
-PIC1_DATA equ PIC1 + 1
-PIC2_DATA equ PIC2 + 1
-
-ICW1_ICW4 equ 0x01
-ICW1_INIT equ 0x10
-ICW4_8086 equ 0x01
-
 section .text
 build_idt:
 %assign i 0
