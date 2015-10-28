@@ -5,7 +5,7 @@ DEPS=$(patsubst src/%.c,dep/%.d,$(C_SRCS))
 CC=i686-elf-gcc
 CFLAGS=-ffreestanding -fno-stack-protector -Wall -Wextra -O3
 LD=i686-elf-gcc
-LDFLAGS=-T link.ld -ffreestanding -O3 -nostdlib -lgcc
+LDFLAGS=-T link.ld -ffreestanding -nostdlib -lgcc -O3
 AS=nasm
 ASFLAGS=-f elf32
 

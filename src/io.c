@@ -159,7 +159,8 @@ void fb_clear(void) {
 
 void fb_scroll(size_t amt) {
     size_t i;
-    for (i = 0; i < WIDTH * HEIGHT - amt; i++) {
+    size_t debug = 0;
+    for (i = 0; i < WIDTH * HEIGHT - amt; i++, debug++) {
         fb[i] = fb[i + amt];
     }
     for(; i < WIDTH * HEIGHT; i++) {

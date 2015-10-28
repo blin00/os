@@ -51,10 +51,18 @@ build_idt:
 no_error_code_interrupt_handler 48
 
 common_interrupt_handler:
-    pushad
     cld
+    pusha
+    xchg bx, bx
+    mov eax, [esp + 8 * 4]  ; interrupt number
+    mov ebx, esp            ; the registers just pushed
+    lea ecx, [esp + 9 * 4]  ; things on stack from interrupt
+    push ecx
+    push ebx
+    push eax
     call interrupt_handler
-    popad
+    add esp, 12
+    popa
     add esp, 8  ; interrupt number and error code
     iret
 

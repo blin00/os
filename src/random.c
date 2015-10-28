@@ -8,6 +8,13 @@
 #include "interrupt.h"
 #include "random.h"
 
+static inline void inc_counter(void);
+static void rand_reseed(uint8_t* seed, size_t length);
+static int rand_generate_blocks(uint8_t* out, size_t blocks);
+static int rand_gen_data(uint8_t* out, size_t bytes);
+static void rand_rdseed(void);
+static void rand_rdtsc(void);
+
 static fortuna_prng_t prng_state;
 static bool has_rdrand = false;
 static bool has_rdseed = false;

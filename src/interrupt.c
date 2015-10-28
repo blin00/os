@@ -1,6 +1,7 @@
 #include "random.h"
 #include "util.h"
 #include "io.h"
+#include "keyboard.h"
 #include "interrupt.h"
 
 static void ack_irq(uint32_t irq);
@@ -23,20 +24,7 @@ static void handle_irq(uint32_t irq) {
         ack_irq(irq);
     } else if (irq == 1) {
         uint8_t sc = inb(0x60);
-        if (sc == 0x01) // ESC
-            _triple_fault();
-        else if (sc == 0x39) {  // spacebar
-            uint8_t buf[16];
-            if (rand_data(buf, 16)) {
-                printf("no data\n");
-            } else {
-                putbytes(buf, 16);
-                putc('\n');
-            }
-            printf("spurious_irq_count: %u\n", spurious_irq_count);
-        } else {
-            printf("key %hhx\n", sc);
-        }
+        add_scancode(sc);
         rand_on_kbd(timer_ticks);
         ack_irq(irq);
     } else if (irq == 8) {
@@ -88,21 +76,20 @@ void setup_int(void) {
     outb(0x71, temp | 0x40);        // set bit 6
     // make IDT and enable interrupts
     build_idt();
-    asm volatile("sti");
 }
 
-void interrupt_handler(cpu_state_t cpu, uint32_t interrupt, stack_state_t stack) {
+void interrupt_handler(uint32_t interrupt, cpu_state_t* cpu, stack_state_t* stack) {
     if (interrupt < 32) {
         // uh oh
         if (interrupt != 3) {
             printf("\n***** kernel panic *****\n");
             printf("unexpected exception 0x%hhx\n", interrupt);
-            printf("eip: 0x%x esp: 0x%x\n", stack.eip, cpu.esp);
+            printf("eip: 0x%x esp: 0x%x\n", stack->eip, cpu->esp);
             BOCHS_BREAK;
             asm volatile("jmp _halt");
         } else {
             printf("\n***** kernel int3 *****\n");
-            printf("eip: 0x%x esp: 0x%x\n", stack.eip, cpu.esp);
+            printf("eip: 0x%x esp: 0x%x\n", stack->eip, cpu->esp);
             BOCHS_BREAK;
         }
         return;
