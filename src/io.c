@@ -43,6 +43,15 @@ void write(const char* buf, size_t count) {
         if (c == '\n') {
             row++;
             col = 0;
+        } else if (c == 127) {
+            if (row || col) {
+                if (col) col--;
+                else {
+                    col = WIDTH - 1;
+                    row--;
+                }
+            }
+            _putc(row * WIDTH + col, ' ');
         } else {
             _putc(row * WIDTH + col, c);
             if (++col >= WIDTH) {

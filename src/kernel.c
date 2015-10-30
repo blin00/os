@@ -11,6 +11,7 @@
 #include "sha256.h"
 #include "aes.h"
 
+/*
 void test_crypto() {
     uint8_t result[32];
     const char* test = "test string 123";
@@ -34,6 +35,7 @@ void test_crypto() {
     putbytes(result, 16);
     putc('\n');
 }
+*/
 
 void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
     fb_init(80, 25);
@@ -76,20 +78,27 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
     }
     printf("using mem: 0x%x-0x%x\n", free_start, free_end);
     init_mem((void*) free_start, free_end - free_start + 1);
-    //test_crypto();
     setup_int();
     printf("init done - press ESC to reboot\n");
     BOCHS_BREAK;
     asm volatile("sti");
     while (1) {
         int sc;
-        uint8_t buf[16];
         asm volatile("hlt");
         sc = get_scancode();
         if (sc != -1) {
             if (sc == 0x01) // ESC
                 _triple_fault();
+            else {
+                char c = kbd_ascii_map[sc];
+                if (c) {
+                    putc(c);
+                    if (c == '\n') puts("hai");
+                }
+            }
+            /*
             else if (sc == 0x39) {  // spacebar
+                uint8_t buf[16];
                 asm volatile("cli");
                 int result = rand_data(buf, 16);
                 asm volatile("sti");
@@ -103,6 +112,7 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
             } else if (sc != 0xb9) {
                 printf("key %hhx\n", sc);
             }
+            */
         }
     }
 }
