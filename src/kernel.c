@@ -37,6 +37,42 @@ void test_crypto() {
 }
 */
 
+void shell(void) {
+    const size_t BUFFER_LEN = 50;
+    int sc;
+    size_t len = 0;
+    char buf[BUFFER_LEN + 1];
+    buf[0] = '\0';
+    printf("> ");
+    while (1) {
+        asm volatile("hlt");
+        sc = get_scancode();
+        if (sc != -1) {
+            if (sc == 0x01) // ESC
+                _triple_fault();
+            else {
+                char c = kbd_ascii_map[sc];
+                if (c == 127) {
+                    if (len > 0) {
+                        len--;
+                        buf[len] = '\0';
+                        putc(127);
+                    }
+                } else if (c == '\n') {
+                    printf("\nbuffer: |%s|\n", buf);
+                    len = 0;
+                    buf[0] = '\0';
+                    printf("> ");
+                } else if (c && len < BUFFER_LEN) {
+                    buf[len++] = c;
+                    buf[len] = '\0';
+                    putc(c);
+                }
+            }
+        }
+    }
+}
+
 void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
     fb_init(80, 25);
     if (magic != 0x2BADB002) {
@@ -82,6 +118,8 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
     printf("init done - press ESC to reboot\n");
     BOCHS_BREAK;
     asm volatile("sti");
+    shell();
+    /*
     while (1) {
         int sc;
         asm volatile("hlt");
@@ -96,7 +134,6 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
                     if (c == '\n') puts("hai");
                 }
             }
-            /*
             else if (sc == 0x39) {  // spacebar
                 uint8_t buf[16];
                 asm volatile("cli");
@@ -112,7 +149,7 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
             } else if (sc != 0xb9) {
                 printf("key %hhx\n", sc);
             }
-            */
         }
     }
+    */
 }
