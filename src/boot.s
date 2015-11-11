@@ -3,10 +3,11 @@ global _halt
 global gdt
 
 extern kmain
+extern _kernel_start
 extern _kernel_end
 
 MAGIC_NUMBER        equ 0x1BADB002     ; define the magic number constant
-MULTIB00T_FLAGS     equ 11b           ; multiboot flags
+MULTIB00T_FLAGS     equ 111b           ; multiboot flags
 CHECKSUM            equ -(MAGIC_NUMBER + MULTIB00T_FLAGS)  ; (magic number + checksum + flags should equal 0)
 KERNEL_STACK_SIZE   equ 16384
 
@@ -15,6 +16,15 @@ align 4                         ; header must be 4 byte aligned
     dd MAGIC_NUMBER
     dd MULTIB00T_FLAGS
     dd CHECKSUM
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 1
+    dd 80
+    dd 25
+    dd 0
 
 section .text
 _start:
@@ -31,10 +41,11 @@ _start:
 ; set up stack and call kmain
     mov esp, kernel_stack_top
     push _kernel_end
+    push _kernel_start
     push ebx
     push eax
     call kmain
-;   add esp, 12
+;   add esp, 16
 ; loop forever if main exits
 _halt:
     cli
@@ -53,7 +64,7 @@ gdtr:
     dq 0x00CF92000000FFFF       ; flat data
 .end:
 
-section .bss
+section .stack nobits
 alignb 16
 kernel_stack_bottom:
     resb KERNEL_STACK_SIZE

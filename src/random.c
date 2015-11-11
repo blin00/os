@@ -72,7 +72,7 @@ static int rand_gen_data(uint8_t* out, size_t bytes) {
 }
 
 int rand_data(uint8_t* out, size_t bytes) {
-    static uint32_t last_reseed = (uint32_t) -42;
+    static uint32_t last_reseed = 0;
     uint8_t buf[32 * 32];
     if (prng_state.pools[0].len >= 64 && rtc_ticks - last_reseed >= 7) {
         last_reseed = rtc_ticks;
@@ -127,15 +127,17 @@ void rand_on_rtc(uint32_t timer_ticks, uint32_t rtc_ticks) {
     static uint32_t num = 0;
     static uint8_t total = 0;
     static uint8_t pool = 0;
-    uint8_t bits = timer_ticks & 0b11;
-    num = (num << 2) | bits;
-    total += 2;
+    const int bits = 4;
+    uint8_t data = timer_ticks & ((1 << bits) - 1);
+    num = (num << bits) | data;
+    total += bits;
     if (total >= sizeof(num) * 8) {
         rand_add_random_event((uint8_t*) &num, sizeof(num), 0, pool);
         pool = (pool + 1) % 32;
         num = 0;
         total = 0;
     }
+    // accelerate inital seed
     if (!prng_state.reseeds || !(rtc_ticks & 0b11111)) {
         rand_rdseed();
         rand_rdtsc();
@@ -146,9 +148,10 @@ void rand_on_kbd(uint32_t timer_ticks) {
     static uint32_t num = 0;
     static uint8_t total = 0;
     static uint8_t pool = 0;
-    uint8_t bits = timer_ticks & 0b1111;
-    num = (num << 4) | bits;
-    total += 4;
+    const int bits = 4;
+    uint8_t data = timer_ticks & ((1 << bits) - 1);
+    num = (num << bits) | data;
+    total += bits;
     if (total >= sizeof(num) * 8) {
         rand_add_random_event((uint8_t*) &num, sizeof(num), 3, pool);
         pool = (pool + 1) % 32;

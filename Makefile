@@ -24,11 +24,14 @@ os.iso: kernel.elf
 	cp kernel.elf iso/boot/kernel.elf
 	grub-mkrescue -d /usr/lib/grub/i386-pc -o os.iso iso
 
-run: kernel.elf
-	qemu-system-i386 -kernel kernel.elf
+run: os.iso
+	qemu-system-i386 -cdrom os.iso
 
 bochs: os.iso
 	bochs -q
+
+clean:
+	rm -rf src/*.o dep *.iso *.elf iso/boot/*.elf
 
 %.o: %.c
 	@mkdir -p dep
@@ -36,8 +39,5 @@ bochs: os.iso
 
 %.o: %.s
 	$(AS) $(ASFLAGS) $< -o $@
-
-clean:
-	rm -rf src/*.o dep *.iso *.elf iso/boot/*.elf
 
 -include $(DEPS)

@@ -2,8 +2,7 @@
 #define MULTIBOOT_H
 
 /* The section header table for ELF. */
-struct __attribute__((packed)) multiboot_elf_section_header_table
-{
+struct __attribute__((packed)) multiboot_elf_section_header_table {
     uint32_t num;
     uint32_t size;
     uint32_t addr;
@@ -11,8 +10,7 @@ struct __attribute__((packed)) multiboot_elf_section_header_table
 };
 typedef struct multiboot_elf_section_header_table multiboot_elf_section_header_table_t;
 
-struct __attribute__((packed)) multiboot_info
-{
+struct __attribute__((packed)) multiboot_info {
     /* Multiboot info version number */
     uint32_t flags;
 
@@ -59,13 +57,40 @@ struct __attribute__((packed)) multiboot_info
 };
 typedef struct multiboot_info multiboot_info_t;
 
-struct __attribute__((packed)) multiboot_mmap_entry
-{
+struct __attribute__((packed)) multiboot_mmap_entry {
     uint32_t size;
     uint64_t addr;
     uint64_t len;
     uint32_t type;
 };
 typedef struct multiboot_mmap_entry multiboot_memory_map_t;
+
+struct __attribute__((packed)) vbe_mode_info {
+    uint16_t ModeAttributes;
+    uint8_t WinAAttributes;
+    uint8_t WinBAttributes;
+    uint16_t WinGranularity;
+    uint16_t WinSize;
+    uint16_t WinASegment;
+    uint16_t WinBSegment;
+    uint32_t WinFuncPtr;
+    uint16_t BytesPerScanLine;
+    uint16_t XResolution;
+    uint16_t YResolution;
+    uint8_t XCharSize;
+    uint8_t YCharSize;
+    uint8_t NumberOfPlanes;
+    uint8_t BitsPerPixel;
+    uint8_t NumberOfBanks;
+    uint8_t MemoryModel;
+    uint8_t BankSize;
+    uint8_t NumberofImagePages;
+    uint8_t Reserved1;
+    uint32_t Junk1;
+    uint32_t Junk2;
+    uint8_t DirectColorModeInfo;
+    uint32_t PhysBasePtr;
+};
+typedef struct vbe_mode_info vbe_mode_info_t;
 
 #endif

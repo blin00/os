@@ -22,11 +22,6 @@ inb:
 
 _rdtsc:
     rdtsc
-    ;mov ecx, [esp + 4]
-    ;test ecx, ecx
-    ;jz .ret
-    ;mov [ecx], edx
-;.ret:
     ret
 
 _rdrand:

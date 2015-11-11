@@ -1,5 +1,5 @@
 #include <stdint.h>
-
+#include <stdbool.h>
 #include "multiboot.h"
 #include "io.h"
 #include "util.h"
@@ -37,56 +37,85 @@ void test_crypto() {
 }
 */
 
+void shell_prompt(void) {
+    printf("[kernel@os]# ");
+}
+
+void shell_cmd(const char* cmd) {
+    if (!strcmp(cmd, "help")) {
+        printf("check the source ;)\n");
+    } else if (!strcmp(cmd, "reboot")) {
+        printf("rebooting...\n");
+        _triple_fault();
+    } else if (!strcmp(cmd, "heap")) {
+        dump_heap();
+    } else if (!strcmp(cmd, "rand")) {
+        uint8_t buf[16];
+        if (!rand_data(buf, 16)) {
+            putbytes(buf, 16);
+            putc('\n');
+        } else {
+            printf("not enough entropy\n");
+        }
+    } else if (!strcmp(cmd, "alloc")) {
+        malloc(0x1000);
+    } else {
+        printf("unknown cmd \"%s\"\n", cmd);
+    }
+}
+
 void shell(void) {
     const size_t BUFFER_LEN = 50;
     int sc;
     size_t len = 0;
     char buf[BUFFER_LEN + 1];
     buf[0] = '\0';
-    printf("> ");
+    shell_prompt();
     while (1) {
         asm volatile("hlt");
         sc = get_scancode();
         if (sc != -1) {
-            if (sc == 0x01) // ESC
-                _triple_fault();
-            else {
-                char c = kbd_ascii_map[sc];
-                if (c == 127) {
-                    if (len > 0) {
-                        len--;
-                        buf[len] = '\0';
-                        putc(127);
-                    }
-                } else if (c == '\n') {
-                    printf("\nbuffer: |%s|\n", buf);
-                    len = 0;
-                    buf[0] = '\0';
-                    printf("> ");
-                } else if (c && len < BUFFER_LEN) {
-                    buf[len++] = c;
+            char c = (get_shift() ? kbd_ascii_map_shift : kbd_ascii_map)[sc];
+            if (c == 8) {
+                if (len > 0) {
+                    len--;
                     buf[len] = '\0';
-                    putc(c);
+                    putc(8);
                 }
+            } else if (c == 27) {
+                while (len > 0) {
+                    putc(8);
+                    len--;
+                }
+                buf[0] = '\0';
+            } else if (c == '\n') {
+                putc('\n');
+                shell_cmd(buf);
+                len = 0;
+                buf[0] = '\0';
+                shell_prompt();
+            } else if (c && len < BUFFER_LEN) {
+                buf[len++] = c;
+                buf[len] = '\0';
+                putc(c);
             }
         }
     }
 }
 
-void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
+void kmain(uint32_t magic, uint32_t info, uint32_t kernel_start, uint32_t kernel_end) {
     fb_init(80, 25);
+    printf("os kernel v0.0.1\n");
     if (magic != 0x2BADB002) {
         printf("error: kernel not loaded by multiboot.\n");
         return;
     }
-    rand_init();
     multiboot_info_t* mb_info = (multiboot_info_t*) info;
-    if (mb_info->flags & (1 << 9)) {
-        char* name = (char*) mb_info->boot_loader_name;
-        size_t len = strlen(name);
-        if (len > 0) {
-            rand_add_random_event((uint8_t*) name, len > 32 ? 32 : len, 255, 0);
-            printf("kernel booted by %s\n", name);
+    if (mb_info->flags & (1 << 11)) {
+        vbe_mode_info_t* vbe_info = (vbe_mode_info_t*) mb_info->vbe_mode_info;
+        printf("graphics: %ux%u @0x%x\n", vbe_info->XResolution, vbe_info->YResolution, vbe_info->PhysBasePtr);
+        if (vbe_info->ModeAttributes & (1 << 4)) {
+            *(uint32_t*) (vbe_info->PhysBasePtr) = 0xffffffff;
         }
     }
     if (!(mb_info->flags & (1 << 6))) {
@@ -112,44 +141,19 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_end) {
         printf("error: unable to detect usable memory.\n");
         return;
     }
-    printf("using mem: 0x%x-0x%x\n", free_start, free_end);
-    init_mem((void*) free_start, free_end - free_start + 1);
-    setup_int();
-    printf("init done - press ESC to reboot\n");
+    printf("kernel: 0x%x-0x%x\n", kernel_start, kernel_end - 1);
+    printf("heap:   0x%x-0x%x\n", free_start, free_end);
+    mem_init((void*) free_start, free_end - free_start + 1);
+    rand_init();
+    if (mb_info->flags & (1 << 9)) {
+        char* name = (char*) mb_info->boot_loader_name;
+        size_t len = strlen(name);
+        if (len > 0) {
+            rand_add_random_event((uint8_t*) name, len > 32 ? 32 : len, 255, 0);
+        }
+    }
+    int_init();
     BOCHS_BREAK;
     asm volatile("sti");
     shell();
-    /*
-    while (1) {
-        int sc;
-        asm volatile("hlt");
-        sc = get_scancode();
-        if (sc != -1) {
-            if (sc == 0x01) // ESC
-                _triple_fault();
-            else {
-                char c = kbd_ascii_map[sc];
-                if (c) {
-                    putc(c);
-                    if (c == '\n') puts("hai");
-                }
-            }
-            else if (sc == 0x39) {  // spacebar
-                uint8_t buf[16];
-                asm volatile("cli");
-                int result = rand_data(buf, 16);
-                asm volatile("sti");
-                if (result) {
-                    printf("no data\n");
-                } else {
-                    putbytes(buf, 16);
-                    putc('\n');
-                }
-                printf("spurious_irq_count: %u\n", spurious_irq_count);
-            } else if (sc != 0xb9) {
-                printf("key %hhx\n", sc);
-            }
-        }
-    }
-    */
 }

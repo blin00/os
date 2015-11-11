@@ -5,6 +5,7 @@ SECTIONS {
     . = 0x00100000;
     /* align each section to 4 KB */
     .text ALIGN(0x1000): {
+        _kernel_start = .;
         *(.multiboot)
         *(.text)
     }
@@ -20,9 +21,7 @@ SECTIONS {
     .bss ALIGN(0x1000): {
         *(COMMON)
         *(.bss)
+        *(.stack)
+        _kernel_end = .;
     }
-
-    . = ALIGN(0x1000);
-
-    _kernel_end = .;
 }

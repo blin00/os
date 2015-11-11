@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define BOCHS_BREAK asm volatile("xchg %bx, %bx")
+#define BOCHS_BREAK __asm__ __volatile__("xchg %bx, %bx")
 
 void outb(uint16_t port, uint8_t data);
 uint8_t inb(uint16_t port);

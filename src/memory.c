@@ -8,7 +8,7 @@
 static const size_t header_len = sizeof(malloc_header_t);
 static malloc_header_t* head = NULL;
 
-void init_mem(void* ptr, size_t size) {
+void mem_init(void* ptr, size_t size) {
     if (head || size < header_len) return;
     head = (malloc_header_t*) ptr;
     head->prev = head->next = NULL;
@@ -74,7 +74,7 @@ void* realloc(void* ptr, size_t size) {
 
 void dump_heap(void) {
     malloc_header_t* ptr = head;
-    printf("\n*** heap dump: ***");
+    printf("*** heap dump: ***\n");
     if (!ptr) {
         printf("no entries\n");
     } else {

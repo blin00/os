@@ -43,7 +43,7 @@ void write(const char* buf, size_t count) {
         if (c == '\n') {
             row++;
             col = 0;
-        } else if (c == 127) {
+        } else if (c == 8) {
             if (row || col) {
                 if (col) col--;
                 else {
@@ -103,14 +103,18 @@ void putbytes(void* ptr, size_t num) {
 void printf(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    while (*fmt) {
-        if (*fmt != '%') {
-            putc(*fmt);
-        } else {
+    size_t idx = 0;
+    while (1) {
+        if (fmt[idx] == '%' || !fmt[idx]) {
+            // print buffered stuff
+            write(fmt, idx);
+            if (!fmt[idx]) break;
+            fmt += idx;
+            idx = 0;
             size_t length = 4;  // # of bytes in the integer
             char type;
 look_at_type:
-            type = *++fmt;
+            type = (++fmt)[idx];
             if (!type) break;
             else if (type == 'l') {
                 length <<= 1;
@@ -147,8 +151,8 @@ look_at_type:
             } else {
                 // ignore invalid format stuff
             }
-        }
-        fmt++;
+            fmt++;
+        } else idx++;
     }
     va_end(args);
 }

@@ -61,8 +61,7 @@ extern volatile uint32_t timer_ticks;
 extern volatile uint32_t rtc_ticks;
 extern volatile uint32_t spurious_irq_count;
 
-void setup_int(void);
-void build_idt(void);
+void int_init(void);
 void _triple_fault(void);
 
 #endif

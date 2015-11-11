@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 #include "keyboard.h"
 
 // one slot is always open, so actual capacity is BUF_SIZE - 1
@@ -7,15 +8,26 @@
 #define BUF_SIZE 1024
 
 const char kbd_ascii_map[256] = {
-    0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 127 /*bksp*/, 0,
+    0, 27 /*esc*/, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 8 /*bksp*/, 0,
     'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0, 'a', 's',
     'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0, '\\', 'z', 'x', 'c', 'v',
-    'b', 'n', 'm', ',', '.', '/', 0, 0, 0, ' '
+    'b', 'n', 'm', ',', '.', '/', 0, 0, 0, ' ',
 };
+
+const char kbd_ascii_map_shift[256] = {
+    0, 27 /*esc*/, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', 8 /*bksp*/, 0,
+    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0, 'A', 'S',
+    'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 0, '|', 'Z', 'X', 'C', 'V',
+    'B', 'N', 'M', '<', '>', '?', 0, 0, 0, ' ',
+};
+
 static uint8_t buf[BUF_SIZE];
 
 static size_t start = 0;
 static size_t end = 0;
+
+static bool lshift = false;
+static bool rshift = false;
 
 int add_scancode(uint8_t sc) {
     size_t new_end = (end + 1) % BUF_SIZE;
@@ -29,5 +41,11 @@ int get_scancode(void) {
     if (start == end) return -1;
     uint8_t result = buf[start];
     start = (start + 1) % BUF_SIZE;
+    if ((result & 0x7f) == 0x2a) lshift = !(result & 0x80);
+    else if ((result & 0x7f) == 0x36) rshift = !(result & 0x80);
     return result;
+}
+
+bool get_shift(void) {
+    return lshift || rshift;
 }

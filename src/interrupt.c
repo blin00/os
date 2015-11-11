@@ -6,6 +6,7 @@
 
 static void ack_irq(uint32_t irq);
 static void handle_irq(uint32_t irq);
+void build_idt(void);
 
 volatile uint32_t timer_ticks;
 volatile uint32_t rtc_ticks;
@@ -37,13 +38,10 @@ static void handle_irq(uint32_t irq) {
         // spurious - acknowledge only master PIC
         if (irq == 15) ack_irq(7);
         spurious_irq_count++;
-    } else {
-        // something else
-        printf("unknown IRQ 0x%hhx\n", irq);
     }
 }
 
-void setup_int(void) {
+void int_init(void) {
     uint8_t temp;
     timer_ticks = 0;
     rtc_ticks = 0;
@@ -74,7 +72,7 @@ void setup_int(void) {
     temp = inb(0x71);
     outb(0x70, 0x8b);
     outb(0x71, temp | 0x40);        // set bit 6
-    // make IDT and enable interrupts
+    // make IDT
     build_idt();
 }
 
@@ -97,7 +95,5 @@ void interrupt_handler(uint32_t interrupt, cpu_state_t* cpu, stack_state_t* stac
         handle_irq(interrupt - 0x20);
     } else if (interrupt == 0x30) {
         printf("got int 0x30\n");
-    } else {
-        printf("unknown int 0x%hhx\n", interrupt);
     }
 }
