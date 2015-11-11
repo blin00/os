@@ -90,6 +90,9 @@ struct __attribute__((packed)) vbe_mode_info {
     uint32_t Junk2;
     uint8_t DirectColorModeInfo;
     uint32_t PhysBasePtr;
+    uint32_t OffScreenMemOffset;
+    uint16_t OffScreenMemSize;
+    uint8_t Reserved2[206];
 };
 typedef struct vbe_mode_info vbe_mode_info_t;
 
