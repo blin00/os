@@ -25,7 +25,7 @@ static void handle_irq(uint32_t irq) {
         ack_irq(irq);
     } else if (irq == 1) {
         uint8_t sc = inb(0x60);
-        add_scancode(sc);
+        on_scancode(sc);
         rand_on_kbd(timer_ticks);
         ack_irq(irq);
     } else if (irq == 8) {

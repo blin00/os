@@ -4,5 +4,5 @@ Unnamed 32-bit protected mode OS under development.
 * i686-elf toolchain
 
 ### Features
-* Fortuna PRNG
+* Fortuna CSPRNG
 * basic kernel heap memory management

@@ -52,6 +52,8 @@ void write(const char* buf, size_t count) {
                 }
             }
             _putc(row * WIDTH + col, ' ');
+        } else if (c == '\t') {
+            putc(' ');
         } else {
             _putc(row * WIDTH + col, c);
             if (++col >= WIDTH) {

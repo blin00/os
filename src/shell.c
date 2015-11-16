@@ -31,7 +31,7 @@ void shell_cmd(const char* cmd) {
             printf("not enough entropy\n");
         }
     } else if (!strcmp(cmd, "alloc")) {
-        malloc(0x1000);
+        malloc(0x10000);
     } else {
         printf("unknown cmd \"%s\"\n", cmd);
     }
@@ -64,6 +64,11 @@ void shell(void) {
             } else if (c == '\n') {
                 putc('\n');
                 shell_cmd(buf);
+                len = 0;
+                buf[0] = '\0';
+                shell_prompt();
+            } else if (get_ctrl() && c == 'c') {
+                printf("^C\n");
                 len = 0;
                 buf[0] = '\0';
                 shell_prompt();
