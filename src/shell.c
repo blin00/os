@@ -32,6 +32,13 @@ void shell_cmd(const char* cmd) {
         }
     } else if (!strcmp(cmd, "alloc")) {
         malloc(0x10000);
+    } else if (!strcmp(cmd, "page")) {
+        printf("trying to map single 4 MiB page...\n");
+        test_enable_paging();
+        printf("done\n");
+    } else if (!strcmp(cmd, "test")) {
+        printf("reading dword at 0x01000000\n");
+        printf("%x\n", *(uint32_t*) 0x01000000);
     } else {
         printf("unknown cmd \"%s\"\n", cmd);
     }

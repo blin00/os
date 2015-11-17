@@ -60,8 +60,10 @@ gdtr:
     dw .end - gdt - 1
     dd gdt
 
-    dq 0x00CF9A000000FFFF       ; flat code
-    dq 0x00CF92000000FFFF       ; flat data
+    dq 0x00CF9A000000FFFF       ; flat ring0 code
+    dq 0x00CF92000000FFFF       ; flat ring0 data
+    dq 0x00CFFA000000FFFF       ; flat ring3 code
+    dq 0x00CFF2000000FFFF       ; flat ring3 data
 .end:
 
 section .stack nobits

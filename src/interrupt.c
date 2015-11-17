@@ -12,6 +12,41 @@ volatile uint32_t timer_ticks;
 volatile uint32_t rtc_ticks;
 volatile uint32_t spurious_irq_count;
 
+static char* exception_msg[] = {
+    "divide by zero",
+    "debug",
+    "non-maskable interrupt",
+    "breakpoint",
+    "overflow",
+    "bound range exceeded",
+    "invalid opcode",
+    "device not available",
+    "double fault",
+    "coprocessor segment overrun",
+    "invalid tss",
+    "segment not present",
+    "stack segment fault",
+    "general protection fault",
+    "page fault",
+    "reserved",
+    "x87 floating-point exception",
+    "alignment check",
+    "machine check",
+    "simd floating-point exception",
+    "virtualization exception",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "security exception",
+    "reserved"
+};
+
 static void ack_irq(uint32_t irq) {
     if (irq >= 8) {
         outb(PIC2_CMD, PIC_EOI);
@@ -81,7 +116,7 @@ void interrupt_handler(uint32_t interrupt, cpu_state_t* cpu, stack_state_t* stac
         // uh oh
         if (interrupt != 3) {
             printf("\n***** kernel panic *****\n");
-            printf("unexpected exception 0x%hhx\n", interrupt);
+            printf("unexpected exception 0x%hhx (%s)\n", interrupt, exception_msg[interrupt]);
             printf("eip: 0x%x esp: 0x%x\n", stack->eip, cpu->esp);
             BOCHS_BREAK;
             asm volatile("jmp _halt");

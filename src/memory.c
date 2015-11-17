@@ -5,6 +5,7 @@
 #include "string.h"
 #include "memory.h"
 
+__attribute__((aligned(4096))) static uint32_t pdt[1024];
 static const size_t header_len = sizeof(malloc_header_t);
 static malloc_header_t* head = NULL;
 
@@ -83,4 +84,22 @@ void dump_heap(void) {
             ptr = ptr->next;
         }
     }
+}
+
+void test_enable_paging(void) {
+    asm volatile("xchg %bx, %bx");
+    memset(pdt, 0, sizeof(pdt));
+    pdt[0] = 0x83;
+    asm volatile(
+        "mov %0, %%cr3\n\t"
+        "mov %%cr4, %%eax\n\t"
+        "or $0x00000010, %%eax\n\t"
+        "mov %%eax, %%cr4\n\t"
+        "mov %%cr0, %%eax\n\t"
+        "or $0x80000000, %%eax\n\t"
+        "mov %%eax, %%cr0"
+        :
+        : "r"(pdt)
+        : "eax"
+    );
 }

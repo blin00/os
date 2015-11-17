@@ -19,4 +19,6 @@ void* calloc(size_t num, size_t size);
 void* realloc(void* ptr, size_t size);
 void dump_heap(void);
 
+void test_enable_paging(void);
+
 #endif
