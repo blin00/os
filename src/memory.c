@@ -9,6 +9,7 @@ __attribute__((aligned(4096))) static uint32_t pdt[1024];
 static const size_t header_len = sizeof(malloc_header_t);
 static malloc_header_t* head = NULL;
 
+// current limitation: can only add one contiguous block of memory to the heap
 void mem_init(void* ptr, size_t size) {
     if (head || size < header_len) return;
     head = (malloc_header_t*) ptr;
@@ -20,7 +21,7 @@ void mem_init(void* ptr, size_t size) {
 // lame first-fit allocator
 void* malloc(size_t size) {
     if (!size) return NULL;
-    // align size to 4 bytes
+    // round size up to 4 byte alignment
     if (size & 0b11) size = (size & ~0b11) + 4;
     malloc_header_t* ptr = head;
     while (ptr) {
@@ -87,7 +88,6 @@ void dump_heap(void) {
 }
 
 void test_enable_paging(void) {
-    asm volatile("xchg %bx, %bx");
     memset(pdt, 0, sizeof(pdt));
     pdt[0] = 0x83;
     asm volatile(

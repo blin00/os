@@ -18,6 +18,7 @@ static void rand_rdtsc(void);
 static fortuna_prng_t prng_state;
 static bool has_rdrand = false;
 static bool has_rdseed = false;
+static volatile bool pool_lock = false;
 
 static inline void inc_counter(void) {
     prng_state.gen.counter.l++;
@@ -75,6 +76,7 @@ int rand_data(uint8_t* out, size_t bytes) {
     static uint32_t last_reseed = 0;
     uint8_t buf[32 * 32];
     if (prng_state.pools[0].len >= 64 && rtc_ticks - last_reseed >= 7) {
+        pool_lock = true;
         last_reseed = rtc_ticks;
         prng_state.reseeds++;
         size_t len = 0;
@@ -87,13 +89,14 @@ int rand_data(uint8_t* out, size_t bytes) {
             }
         }
         rand_reseed(buf, len);
+        pool_lock = false;
     }
     if (!prng_state.reseeds) return 1;
     return rand_gen_data(out, bytes);
 }
 
 void rand_add_random_event(uint8_t* data, uint8_t length, uint8_t source, uint8_t pool) {
-    if (length < 1 || length > 32 || pool > 31) return;
+    if (pool_lock || length < 1 || length > 32 || pool > 31) return;
     sha256_update(&prng_state.pools[pool].ctx, &source, 1);
     sha256_update(&prng_state.pools[pool].ctx, &length, 1);
     sha256_update(&prng_state.pools[pool].ctx, data, length);
@@ -104,12 +107,12 @@ static void rand_rdseed(void) {
     static uint8_t pool = 0;
     uint32_t seed;
     if (has_rdseed) {
-        if (!_rdseed(&seed)) {
+        if (_rdseed(&seed)) {
             rand_add_random_event((uint8_t*) &seed, sizeof(seed), 2, pool);
             pool = (pool + 1) % 32;
         }
     } else if (has_rdrand) {
-        if (!_rdrand(&seed)) {
+        if (_rdrand(&seed)) {
             rand_add_random_event((uint8_t*) &seed, sizeof(seed), 2, pool);
             pool = (pool + 1) % 32;
         }
@@ -118,7 +121,7 @@ static void rand_rdseed(void) {
 
 static void rand_rdtsc(void) {
     static uint8_t pool = 0;
-    uint16_t t = (uint16_t) _rdtsc();
+    uint16_t t = (uint16_t) __builtin_ia32_rdtsc();
     rand_add_random_event((uint8_t*) &t, sizeof(t), 1, pool);
     pool = (pool + 1) % 32;
 }

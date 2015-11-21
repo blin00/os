@@ -53,7 +53,7 @@ void shell(void) {
     shell_prompt();
     while (1) {
         asm volatile("hlt");
-        sc = get_scancode();
+        sc = get_keycode();
         if (sc != -1) {
             char c = (get_shift() ? kbd_ascii_map_shift : kbd_ascii_map)[sc];
             if (c == 8) {

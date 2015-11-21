@@ -86,8 +86,14 @@ struct __attribute__((packed)) vbe_mode_info {
     uint8_t BankSize;
     uint8_t NumberofImagePages;
     uint8_t Reserved1;
-    uint32_t Junk1;
-    uint32_t Junk2;
+    uint8_t RedMaskSize;
+    uint8_t RedMaskPosition;
+    uint8_t GreenMaskSize;
+    uint8_t GreenMaskPosition;
+    uint8_t BlueMaskSize;
+    uint8_t BlueMaskPosition;
+    uint8_t RsvdMaskSize;
+    uint8_t RsvdFieldPosition;
     uint8_t DirectColorModeInfo;
     uint32_t PhysBasePtr;
     uint32_t OffScreenMemOffset;

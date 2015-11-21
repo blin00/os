@@ -46,8 +46,6 @@ int on_scancode(uint8_t sc) {
         }
     } else if (state == E0) {
         state = IDLE;
-        // map r-ctrl to l-ctrl
-        if (sc == 0x1d) return add_scancode(0x1d);
     } else if (state == E1_0) {
         state = E1_1;
     } else if (state == E1_1) {
@@ -64,7 +62,7 @@ static int add_scancode(uint8_t sc) {
     return 0;
 }
 
-int get_scancode(void) {
+int get_keycode(void) {
     if (start == end) return -1;
     uint8_t result = buf[start];
     start = (start + 1) % BUF_SIZE;

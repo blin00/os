@@ -1,6 +1,5 @@
 global outb
 global inb
-global _rdtsc
 global _rdrand
 global _rdseed
 
@@ -20,26 +19,22 @@ inb:
 	in al, dx
 	ret
 
-_rdtsc:
-    rdtsc
-    ret
-
 _rdrand:
     rdrand ecx
-    mov eax, 1
+    xor eax, eax
     jnc .ret
     mov edx, [esp + 4]
     mov [edx], ecx
-    xor eax, eax
+    inc eax
 .ret:
     ret
 
 _rdseed:
     rdseed ecx
-    mov eax, 1
+    xor eax, eax
     jnc .ret
     mov edx, [esp + 4]
     mov [edx], ecx
-    xor eax, eax
+    inc eax
 .ret:
     ret

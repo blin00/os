@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 int on_scancode(uint8_t sc);
-int get_scancode(void);
+int get_keycode(void);
 bool get_shift(void);
 bool get_ctrl(void);
 
