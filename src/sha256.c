@@ -41,7 +41,7 @@ static const uint32_t k[64] = {
 };
 
 /*********************** FUNCTION DEFINITIONS ***********************/
-void sha256_transform(SHA256_CTX *ctx, const uint8_t data[])
+void sha256_transform(SHA256_CTX* ctx, const uint8_t data[])
 {
    uint32_t a, b, c, d, e, f, g, h, i, j, t1, t2, m[64];
 
@@ -82,7 +82,7 @@ void sha256_transform(SHA256_CTX *ctx, const uint8_t data[])
    ctx->state[7] += h;
 }
 
-void sha256_init(SHA256_CTX *ctx)
+void sha256_init(SHA256_CTX* ctx)
 {
    ctx->datalen = 0;
    ctx->bitlen = 0;
@@ -96,7 +96,7 @@ void sha256_init(SHA256_CTX *ctx)
    ctx->state[7] = 0x5be0cd19;
 }
 
-void sha256_update(SHA256_CTX *ctx, const uint8_t data[], size_t len)
+void sha256_update(SHA256_CTX* ctx, const uint8_t data[], size_t len)
 {
    uint32_t i;
 
@@ -111,7 +111,7 @@ void sha256_update(SHA256_CTX *ctx, const uint8_t data[], size_t len)
    }
 }
 
-void sha256_final(SHA256_CTX *ctx, uint8_t hash[])
+void sha256_final(SHA256_CTX* ctx, uint8_t hash[])
 {
    uint32_t i;
 

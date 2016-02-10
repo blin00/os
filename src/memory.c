@@ -5,7 +5,7 @@
 #include "string.h"
 #include "memory.h"
 
-__attribute__((aligned(4096))) static uint32_t pdt[1024];
+static __attribute__((aligned(4096))) uint32_t pdt[1024];
 static const size_t header_len = sizeof(malloc_header_t);
 static malloc_header_t* head = NULL;
 
@@ -27,7 +27,7 @@ void* malloc(size_t size) {
     while (ptr) {
         if (!ptr->used && ptr->length >= size) {
             if (size + header_len <= ptr->length) {
-                malloc_header_t* split = (malloc_header_t*) ((unsigned char*) ptr + header_len + size);
+                malloc_header_t* split = (malloc_header_t*) ((uint8_t*) ptr + header_len + size);
                 split->prev = ptr;
                 split->next = ptr->next;
                 ptr->next = split;
@@ -36,7 +36,7 @@ void* malloc(size_t size) {
                 ptr->length = size;
             }
             ptr->used = true;
-            return (unsigned char*) ptr + header_len;
+            return (uint8_t*) ptr + header_len;
         } else ptr = ptr->next;
     }
     return NULL;
@@ -44,7 +44,7 @@ void* malloc(size_t size) {
 
 void free(void* ptr) {
     if (!ptr) return;
-    malloc_header_t* entry = (malloc_header_t*) ((unsigned char*) ptr - header_len);
+    malloc_header_t* entry = (malloc_header_t*) ((uint8_t*) ptr - header_len);
     entry->used = false;
     // merge adjacent blocks
     // assumes that two adjacent blocks are right after each other in memory
@@ -68,7 +68,7 @@ void* realloc(void* ptr, size_t size) {
     if (!ptr) return malloc(size);
     void* buf = malloc(size);
     if (!buf) return NULL;
-    malloc_header_t* entry = (malloc_header_t*) ((unsigned char*) ptr - header_len);
+    malloc_header_t* entry = (malloc_header_t*) ((uint8_t*) ptr - header_len);
     memcpy(buf, ptr, entry->length);
     free(ptr);
     return buf;
@@ -81,7 +81,7 @@ void dump_heap(void) {
         printf("no entries\n");
     } else {
         while (ptr) {
-            printf("entry: 0x%x, length: 0x%x%s\n", (unsigned int) ptr, ptr->length, ptr->used ? " (*)" : "");
+            printf("entry: 0x%x, length: 0x%x%s\n", (uint32_t) ptr, ptr->length, ptr->used ? " (*)" : "");
             ptr = ptr->next;
         }
     }

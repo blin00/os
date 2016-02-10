@@ -61,11 +61,11 @@ static void handle_irq(uint32_t irq) {
     } else if (irq == 1) {
         uint8_t sc = inb(0x60);
         on_scancode(sc);
-        rand_on_kbd(timer_ticks);
+        rand_on_kbd();
         ack_irq(irq);
     } else if (irq == 8) {
         rtc_ticks++;
-        rand_on_rtc(timer_ticks, rtc_ticks);
+        rand_on_rtc();
         outb(0x70, 0x0c);
         inb(0x71);
         ack_irq(irq);
@@ -93,8 +93,8 @@ void int_init(void) {
     // set PIC masks
     outb(PIC1_DATA, 0b11111000);    // PIT (timer), keyboard, cascade
     outb(PIC2_DATA, 0b11111110);    // CMOS RTC
-    // initialize PIT to ~66288 Hz (~1193182 / 18)
-    outb(0x43, 0b00110100);
+    // initialize PIT to ~66288 Hz (1193181.666... / 18)
+    outb(0x43, 0b00110110);
     outb(0x40, 18);
     outb(0x40, 0x00);
     // initialize RTC to 64 Hz (32768 >> (10 - 1))

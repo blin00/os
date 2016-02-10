@@ -4,8 +4,8 @@ SECTIONS {
     /* load at 1 MB */
     . = 0x00100000;
     /* align each section to 4 KB */
+    _kernel_start = .;
     .text ALIGN(0x1000): {
-        _kernel_start = .;
         *(.multiboot)
         *(.text)
     }
@@ -22,6 +22,6 @@ SECTIONS {
         *(COMMON)
         *(.bss)
         *(.stack)
-        _kernel_end = .;
     }
+    _kernel_end = .;
 }

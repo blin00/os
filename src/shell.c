@@ -37,8 +37,8 @@ void shell_cmd(const char* cmd) {
         test_enable_paging();
         printf("done\n");
     } else if (!strcmp(cmd, "test")) {
-        printf("reading dword at 0x01000000\n");
-        printf("%x\n", *(uint32_t*) 0x01000000);
+        printf("spurious irq count: %u\n", spurious_irq_count);
+        printf("rdtsc: %lx\n", __builtin_ia32_rdtsc());
     } else {
         printf("unknown cmd \"%s\"\n", cmd);
     }

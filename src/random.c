@@ -95,11 +95,11 @@ int rand_data(uint8_t* out, size_t bytes) {
     return rand_gen_data(out, bytes);
 }
 
-void rand_add_random_event(uint8_t* data, uint8_t length, uint8_t source, uint8_t pool) {
+void rand_add_random_event(void* data, uint8_t length, uint8_t source, uint8_t pool) {
     if (pool_lock || length < 1 || length > 32 || pool > 31) return;
     sha256_update(&prng_state.pools[pool].ctx, &source, 1);
     sha256_update(&prng_state.pools[pool].ctx, &length, 1);
-    sha256_update(&prng_state.pools[pool].ctx, data, length);
+    sha256_update(&prng_state.pools[pool].ctx, (uint8_t*) data, length);
     prng_state.pools[pool].len += length;
 }
 
@@ -121,12 +121,12 @@ static void rand_rdseed(void) {
 
 static void rand_rdtsc(void) {
     static uint8_t pool = 0;
-    uint16_t t = (uint16_t) __builtin_ia32_rdtsc();
-    rand_add_random_event((uint8_t*) &t, sizeof(t), 1, pool);
+    uint32_t t = (uint32_t) __builtin_ia32_rdtsc();
+    rand_add_random_event(&t, sizeof(t), 1, pool);
     pool = (pool + 1) % 32;
 }
 
-void rand_on_rtc(uint32_t timer_ticks, uint32_t rtc_ticks) {
+void rand_on_rtc(void) {
     static uint32_t num = 0;
     static uint8_t total = 0;
     static uint8_t pool = 0;
@@ -140,14 +140,14 @@ void rand_on_rtc(uint32_t timer_ticks, uint32_t rtc_ticks) {
         num = 0;
         total = 0;
     }
-    // accelerate inital seed
-    if (!prng_state.reseeds || !(rtc_ticks & 0b11111)) {
+    // use extra entropy to accelerate first seed and one per second afterwards
+    if (!prng_state.reseeds || !(rtc_ticks & 0b111111)) {
         rand_rdseed();
         rand_rdtsc();
     }
 }
 
-void rand_on_kbd(uint32_t timer_ticks) {
+void rand_on_kbd(void) {
     static uint32_t num = 0;
     static uint8_t total = 0;
     static uint8_t pool = 0;
@@ -161,5 +161,4 @@ void rand_on_kbd(uint32_t timer_ticks) {
         num = 0;
         total = 0;
     }
-    rand_rdtsc();
 }

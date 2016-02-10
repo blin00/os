@@ -39,6 +39,7 @@ _start:
     mov gs, cx
     mov ss, cx
 ; set up stack and call kmain
+    cld
     mov esp, kernel_stack_top
     push _kernel_end
     push _kernel_start
