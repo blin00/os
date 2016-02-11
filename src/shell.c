@@ -36,9 +36,11 @@ void shell_cmd(const char* cmd) {
         printf("trying to map single 4 MiB page...\n");
         test_enable_paging();
         printf("done\n");
-    } else if (!strcmp(cmd, "test")) {
-        printf("spurious irq count: %u\n", spurious_irq_count);
-        printf("rdtsc: %lx\n", __builtin_ia32_rdtsc());
+    } else if (!strcmp(cmd, "info")) {
+        printf("pit ticks: %u\n", pit_ticks);
+        printf("rtc ticks: %lu\n", rtc_ticks);
+        printf("spurious irq count: %lu\n", spurious_irq_count);
+        printf("rdtsc: 0x%lx\n", __builtin_ia32_rdtsc());
     } else {
         printf("unknown cmd \"%s\"\n", cmd);
     }

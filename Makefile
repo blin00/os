@@ -9,7 +9,7 @@ LDFLAGS=-T link.ld -ffreestanding -nostdlib -lgcc -O2 -pipe
 AS=nasm
 ASFLAGS=-f elf32
 
-.PHONY: all kernel iso run bochs clean
+.PHONY: all kernel iso run bochs clean install
 
 all: kernel iso
 
@@ -29,6 +29,9 @@ run: os.iso
 
 bochs: os.iso
 	bochs -q
+
+install: kernel.elf
+	sudo cp kernel.elf /boot/kernel.elf
 
 clean:
 	rm -rf src/*.o dep *.iso *.elf iso/boot/*.elf

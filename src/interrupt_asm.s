@@ -23,6 +23,7 @@ interrupt_handler_%1:
 global build_idt
 global idt
 global _triple_fault
+global disable_apic
 
 extern interrupt_handler
 
@@ -70,6 +71,13 @@ _triple_fault:
     lidt [idtr]
     int3
     jmp _triple_fault
+
+disable_apic:
+    mov ecx, 0x1b
+    rdmsr
+    and eax, ~(1 << 11)
+    wrmsr
+    ret
 
 section .data
 align 4

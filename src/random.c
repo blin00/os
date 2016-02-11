@@ -18,7 +18,7 @@ static void rand_rdtsc(void);
 static fortuna_prng_t prng_state;
 static bool has_rdrand = false;
 static bool has_rdseed = false;
-static volatile bool pool_lock = false;
+static volatile bool pool_lock = false; // only interrupt safe - once there are threads, this doesn't work anymore
 
 static inline void inc_counter(void) {
     prng_state.gen.counter.l++;
@@ -72,7 +72,7 @@ static int rand_gen_data(uint8_t* out, size_t bytes) {
     return 0;
 }
 
-int rand_data(uint8_t* out, size_t bytes) {
+int rand_data(void* out, size_t bytes) {
     static uint32_t last_reseed = 0;
     uint8_t buf[32 * 32];
     if (prng_state.pools[0].len >= 64 && rtc_ticks - last_reseed >= 7) {
@@ -92,13 +92,15 @@ int rand_data(uint8_t* out, size_t bytes) {
         pool_lock = false;
     }
     if (!prng_state.reseeds) return 1;
-    return rand_gen_data(out, bytes);
+    return rand_gen_data((uint8_t*) out, bytes);
 }
 
 void rand_add_random_event(void* data, uint8_t length, uint8_t source, uint8_t pool) {
     if (pool_lock || length < 1 || length > 32 || pool > 31) return;
-    sha256_update(&prng_state.pools[pool].ctx, &source, 1);
-    sha256_update(&prng_state.pools[pool].ctx, &length, 1);
+    uint8_t header[2];
+    header[0] = source;
+    header[1] = length;
+    sha256_update(&prng_state.pools[pool].ctx, header, 2);
     sha256_update(&prng_state.pools[pool].ctx, (uint8_t*) data, length);
     prng_state.pools[pool].len += length;
 }
@@ -108,12 +110,12 @@ static void rand_rdseed(void) {
     uint32_t seed;
     if (has_rdseed) {
         if (_rdseed(&seed)) {
-            rand_add_random_event((uint8_t*) &seed, sizeof(seed), 2, pool);
+            rand_add_random_event(&seed, sizeof(seed), 2, pool);
             pool = (pool + 1) % 32;
         }
     } else if (has_rdrand) {
         if (_rdrand(&seed)) {
-            rand_add_random_event((uint8_t*) &seed, sizeof(seed), 2, pool);
+            rand_add_random_event(&seed, sizeof(seed), 2, pool);
             pool = (pool + 1) % 32;
         }
     }
@@ -131,16 +133,18 @@ void rand_on_rtc(void) {
     static uint8_t total = 0;
     static uint8_t pool = 0;
     const int bits = 4;
-    uint8_t data = timer_ticks & ((1 << bits) - 1);
-    num = (num << bits) | data;
-    total += bits;
-    if (total >= sizeof(num) * 8) {
-        rand_add_random_event((uint8_t*) &num, sizeof(num), 0, pool);
-        pool = (pool + 1) % 32;
-        num = 0;
-        total = 0;
+    if (!prng_state.reseeds || !(rtc_ticks & 0b11)) {
+        uint8_t data = pit_ticks & ((1 << bits) - 1);
+        num = (num << bits) | data;
+        total += bits;
+        if (total >= sizeof(num) * 8) {
+            rand_add_random_event(&num, sizeof(num), 0, pool);
+            pool = (pool + 1) % 32;
+            num = 0;
+            total = 0;
+        }
     }
-    // use extra entropy to accelerate first seed and one per second afterwards
+    // use extra entropy to accelerate first seed and once per second afterwards
     if (!prng_state.reseeds || !(rtc_ticks & 0b111111)) {
         rand_rdseed();
         rand_rdtsc();
@@ -152,11 +156,11 @@ void rand_on_kbd(void) {
     static uint8_t total = 0;
     static uint8_t pool = 0;
     const int bits = 4;
-    uint8_t data = timer_ticks & ((1 << bits) - 1);
+    uint8_t data = pit_ticks & ((1 << bits) - 1);
     num = (num << bits) | data;
     total += bits;
     if (total >= sizeof(num) * 8) {
-        rand_add_random_event((uint8_t*) &num, sizeof(num), 3, pool);
+        rand_add_random_event(&num, sizeof(num), 3, pool);
         pool = (pool + 1) % 32;
         num = 0;
         total = 0;

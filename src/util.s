@@ -2,6 +2,8 @@ global outb
 global inb
 global _rdrand
 global _rdseed
+global _rdmsr
+global _wrmsr
 
 section .text
 ; outb - send a byte to an I/O port
@@ -37,4 +39,16 @@ _rdseed:
     mov [edx], ecx
     inc eax
 .ret:
+    ret
+
+_rdmsr:
+    mov ecx, [esp + 4]
+    rdmsr
+    ret
+
+_wrmsr:
+    mov ecx, [esp + 4]
+    mov edx, [esp + 8]
+    mov eax, [esp + 12]
+    wrmsr
     ret

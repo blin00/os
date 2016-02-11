@@ -1,16 +1,17 @@
+#include <cpuid.h>
 #include "random.h"
 #include "util.h"
 #include "io.h"
 #include "keyboard.h"
 #include "interrupt.h"
 
-static void ack_irq(uint32_t irq);
-static void handle_irq(uint32_t irq);
+static void ack_irq(uint8_t irq);
+static void handle_irq(uint8_t irq);
 void build_idt(void);
 
-volatile uint32_t timer_ticks;
-volatile uint32_t rtc_ticks;
-volatile uint32_t spurious_irq_count;
+volatile uint32_t pit_ticks;    // not 64 bit because changed often + don't care about rollover
+volatile uint64_t rtc_ticks;
+volatile uint64_t spurious_irq_count;
 
 static char* exception_msg[] = {
     "divide by zero",
@@ -47,16 +48,16 @@ static char* exception_msg[] = {
     "reserved"
 };
 
-static void ack_irq(uint32_t irq) {
+static void ack_irq(uint8_t irq) {
     if (irq >= 8) {
         outb(PIC2_CMD, PIC_EOI);
     }
     outb(PIC1_CMD, PIC_EOI);
 }
 
-static void handle_irq(uint32_t irq) {
+static void handle_irq(uint8_t irq) {
     if (irq == 0) {
-        timer_ticks++;
+        pit_ticks++;
         ack_irq(irq);
     } else if (irq == 1) {
         uint8_t sc = inb(0x60);
@@ -70,7 +71,7 @@ static void handle_irq(uint32_t irq) {
         inb(0x71);
         ack_irq(irq);
     } else if (irq == 7 || irq == 15) {
-        // spurious - acknowledge only master PIC
+        // spurious - acknowledge only master PIC if needed
         if (irq == 15) ack_irq(7);
         spurious_irq_count++;
     }
@@ -78,9 +79,18 @@ static void handle_irq(uint32_t irq) {
 
 void int_init(void) {
     uint8_t temp;
-    timer_ticks = 0;
+    pit_ticks = 0;
     rtc_ticks = 0;
     spurious_irq_count = 0;
+    // make IDT
+    build_idt();
+    // disable APIC
+    unsigned int eax, ebx, ecx, edx;
+    if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
+        if (edx & (1 << 9)) {
+            disable_apic();
+        }
+    }
     // initialize PIC
     outb(PIC1_CMD, ICW1_INIT | ICW1_ICW4);  // starts the initialization sequence (in cascade mode)
     outb(PIC2_CMD, ICW1_INIT | ICW1_ICW4);
@@ -93,9 +103,9 @@ void int_init(void) {
     // set PIC masks
     outb(PIC1_DATA, 0b11111000);    // PIT (timer), keyboard, cascade
     outb(PIC2_DATA, 0b11111110);    // CMOS RTC
-    // initialize PIT to ~66288 Hz (1193181.666... / 18)
+    // initialize PIT to ~5013 Hz (1193181.666... / 238)
     outb(0x43, 0b00110110);
-    outb(0x40, 18);
+    outb(0x40, 238);
     outb(0x40, 0x00);
     // initialize RTC to 64 Hz (32768 >> (10 - 1))
     // also disables NMI (until next RTC interrupt)
@@ -107,8 +117,6 @@ void int_init(void) {
     temp = inb(0x71);
     outb(0x70, 0x8b);
     outb(0x71, temp | 0x40);        // set bit 6
-    // make IDT
-    build_idt();
 }
 
 void interrupt_handler(uint32_t interrupt, cpu_state_t* cpu, stack_state_t* stack) {

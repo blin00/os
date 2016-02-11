@@ -32,7 +32,7 @@ struct fortuna_prng {
 typedef struct fortuna_prng fortuna_prng_t;
 
 void rand_init(void);
-int rand_data(uint8_t* out, size_t bytes);
+int rand_data(void* out, size_t bytes);
 void rand_on_rtc(void);
 void rand_on_kbd(void);
 void rand_add_random_event(void* data, uint8_t length, uint8_t source, uint8_t pool);

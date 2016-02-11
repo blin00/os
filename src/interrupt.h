@@ -57,11 +57,12 @@ struct __attribute__((packed)) stack_state {
 typedef struct stack_state stack_state_t;
 
 extern idt_entry_t idt[256];
-extern volatile uint32_t timer_ticks;
-extern volatile uint32_t rtc_ticks;
-extern volatile uint32_t spurious_irq_count;
+extern volatile uint32_t pit_ticks;
+extern volatile uint64_t rtc_ticks;
+extern volatile uint64_t spurious_irq_count;
 
 void int_init(void);
 void _triple_fault(void);
+void disable_apic(void);
 
 #endif
