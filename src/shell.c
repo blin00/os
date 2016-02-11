@@ -8,10 +8,18 @@
 #include "random.h"
 #include "keyboard.h"
 #include "interrupt.h"
+#include "thread.h"
 #include "shell.h"
 
 void shell_prompt(void) {
     printf("[kernel@os]# ");
+}
+
+void test(void) {
+    while (1) {
+        printf("hi!\n");
+        thread_yield();
+    }
 }
 
 void shell_cmd(const char* cmd) {
@@ -41,6 +49,10 @@ void shell_cmd(const char* cmd) {
         printf("rtc ticks: %lu\n", rtc_ticks);
         printf("spurious irq count: %lu\n", spurious_irq_count);
         printf("rdtsc: 0x%lx\n", __builtin_ia32_rdtsc());
+    } else if (!strcmp(cmd, "test")) {
+        thread_create(test);
+    } else if (!strcmp(cmd, "yield")) {
+        thread_yield();
     } else {
         printf("unknown cmd \"%s\"\n", cmd);
     }

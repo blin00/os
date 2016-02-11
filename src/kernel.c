@@ -6,6 +6,7 @@
 #include "interrupt.h"
 #include "memory.h"
 #include "random.h"
+#include "thread.h"
 #include "shell.h"
 
 /*
@@ -86,11 +87,14 @@ void kmain(uint32_t magic, uint32_t info, uint32_t kernel_start, uint32_t kernel
         }
     }
     int_init();
+    thread_init();
     BOCHS_BREAK;
     asm volatile("sti");
+    /*
     printf("gathering entropy...\n");
     while (rand_data(NULL, 0)) {
         asm volatile("hlt");
     }
+    */
     shell();
 }
