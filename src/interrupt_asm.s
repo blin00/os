@@ -54,9 +54,9 @@ no_error_code_interrupt_handler 48
 common_interrupt_handler:
     pushad
     cld
-    mov eax, [esp + 8 * 4]  ; interrupt number
-    mov ebx, esp            ; the registers just pushed
     lea ecx, [esp + 9 * 4]  ; things on stack from interrupt
+    mov ebx, esp            ; the registers just pushed
+    mov eax, [esp + 8 * 4]  ; interrupt number
     push ecx
     push ebx
     push eax

@@ -15,11 +15,8 @@ void shell_prompt(void) {
     printf("[kernel@os]# ");
 }
 
-void test(void) {
-    while (1) {
-        printf("hi!\n");
-        thread_yield();
-    }
+void test(void* arg) {
+    printf("hi! %u\n", (uint32_t) arg);
 }
 
 void shell_cmd(const char* cmd) {
@@ -50,7 +47,7 @@ void shell_cmd(const char* cmd) {
         printf("spurious irq count: %lu\n", spurious_irq_count);
         printf("rdtsc: 0x%lx\n", __builtin_ia32_rdtsc());
     } else if (!strcmp(cmd, "test")) {
-        thread_create(test);
+        thread_create(test, NULL);
     } else if (!strcmp(cmd, "yield")) {
         thread_yield();
     } else {

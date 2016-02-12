@@ -119,7 +119,7 @@ void int_init(void) {
     outb(0x71, temp | 0x40);        // set bit 6
 }
 
-void interrupt_handler(uint32_t interrupt, cpu_state_t* cpu, stack_state_t* stack) {
+void interrupt_handler(uint32_t interrupt, register_state_t* cpu, stack_state_t* stack) {
     if (interrupt < 32) {
         // uh oh
         if (interrupt != 3) {

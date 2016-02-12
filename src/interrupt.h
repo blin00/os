@@ -36,7 +36,7 @@ struct __attribute__((packed)) idt_entry {
 };
 typedef struct idt_entry idt_entry_t;
 
-struct __attribute__((packed)) cpu_state {
+struct __attribute__((packed)) register_state {
     uint32_t edi;
     uint32_t esi;
     uint32_t ebp;
@@ -46,7 +46,7 @@ struct __attribute__((packed)) cpu_state {
     uint32_t ecx;
     uint32_t eax;
 };
-typedef struct cpu_state cpu_state_t;
+typedef struct register_state register_state_t;
 
 struct __attribute__((packed)) stack_state {
     uint32_t error_code;
