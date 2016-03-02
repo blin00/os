@@ -69,7 +69,9 @@ void* realloc(void* ptr, size_t size) {
     void* buf = malloc(size);
     if (!buf) return NULL;
     malloc_header_t* entry = (malloc_header_t*) ((uint8_t*) ptr - header_len);
-    memcpy(buf, ptr, entry->length);
+    size_t orig_size = entry->length;
+    size_t min_size = size > orig_size ? orig_size : size;
+    memcpy(buf, ptr, min_size);
     free(ptr);
     return buf;
 }
