@@ -1,21 +1,22 @@
 %macro no_error_code_interrupt_handler 1
 interrupt_handler_%1:
-    push    dword 0                     ; push 0 as error code
-    push    dword %1                    ; push the interrupt number
-    jmp     common_interrupt_handler    ; jump to the common handler
+    push dword 0                        ; push 0 as error code
+    push dword %1                       ; push the interrupt number
+    jmp common_interrupt_handler        ; jump to the common handler
 %endmacro
 
 %macro error_code_interrupt_handler 1
 interrupt_handler_%1:
-    push    dword %1                    ; push the interrupt number
-    jmp     common_interrupt_handler    ; jump to the common handler
+    push dword %1                       ; push the interrupt number
+    jmp common_interrupt_handler        ; jump to the common handler
 %endmacro
 
-%macro build_idt_entry 1
+%macro build_idt_entry 2                ; build_idt_entry number type
     mov eax, interrupt_handler_%1
-    mov [idt + 8 * %1], ax
-    mov word [idt + 8 * %1 + 2], 0x08
-    mov word [idt + 8 * %1 + 4], 0x8e00 ; e = interrupt gate, f = trap gate
+    mov [idt + 8 * %1], ax              ; first half of offset (address of handler)
+    mov word [idt + 8 * %1 + 2], 0x08   ; segment
+    mov byte [idt + 8 * %1 + 4], 0x00   ; must be zero
+    mov byte [idt + 8 * %1 + 5], %2     ; second nibble: e = interrupt gate, f = trap gate
     shr eax, 16
     mov [idt + %1 * 8 + 6], ax
 %endmacro
@@ -31,11 +32,11 @@ section .text
 build_idt:
 %assign i 0
 %rep 48
-    build_idt_entry i
+    build_idt_entry i, 0x8e              ; 8: privileged, e: interrupt gate
 %assign i i + 1
 %endrep
 
-    build_idt_entry 48
+    build_idt_entry 48, 0xee             ; e: unprivileged
     lidt [idtr]
     ret
 

@@ -64,9 +64,9 @@ void shell(void) {
     shell_prompt();
     while (1) {
         asm volatile("hlt");
-        sc = get_keycode();
+        sc = kbd_get_keycode();
         if (sc != -1) {
-            char c = (get_shift() ? kbd_ascii_map_shift : kbd_ascii_map)[sc];
+            char c = (kbd_get_shift() ? kbd_ascii_map_shift : kbd_ascii_map)[sc];
             if (c == 8) {
                 if (len > 0) {
                     len--;
@@ -85,7 +85,7 @@ void shell(void) {
                 len = 0;
                 buf[0] = '\0';
                 shell_prompt();
-            } else if (get_ctrl() && c == 'c') {
+            } else if (kbd_get_ctrl() && c == 'c') {
                 printf("^C\n");
                 len = 0;
                 buf[0] = '\0';

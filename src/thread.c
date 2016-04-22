@@ -4,8 +4,8 @@
 #include "thread.h"
 #include "io.h"
 
-volatile thread_t* thread_list;
-volatile thread_t* thread_cur;
+thread_t* thread_list;
+thread_t* thread_cur;
 
 // initialize the threading system
 void thread_init(void) {

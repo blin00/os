@@ -23,7 +23,7 @@ enum vga_color {
     COLOR_WHITE = 15,
 };
 
-void write(const char* buf, size_t count);
+void fb_write(const char* buf, size_t count);
 void putc(char c);
 void puts(const char* str);
 void putu(uint32_t num);

@@ -37,14 +37,13 @@ void test_crypto() {
 }
 */
 
-void kmain(uint32_t magic, uint32_t info, uint32_t kernel_start, uint32_t kernel_end) {
+void kmain(uint32_t magic, multiboot_info_t* mb_info, uint32_t kernel_start, uint32_t kernel_end) {
     fb_init(80, 25);
     printf("os kernel v0.0.1\n");
     if (magic != 0x2BADB002) {
         printf("error: kernel not loaded by multiboot.\n");
         return;
     }
-    multiboot_info_t* mb_info = (multiboot_info_t*) info;
     if (mb_info->flags & (1 << 11)) {
         vbe_mode_info_t* vbe_info = (vbe_mode_info_t*) mb_info->vbe_mode_info;
         printf("graphics: %ux%u @0x%x\n", vbe_info->XResolution, vbe_info->YResolution, vbe_info->PhysBasePtr);

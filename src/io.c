@@ -37,7 +37,7 @@ static void _putc(size_t loc, char c) {
     fb[loc] = value;
 }
 
-void write(const char* buf, size_t count) {
+void fb_write(const char* buf, size_t count) {
     for (size_t i = 0; i < count; i++) {
         char c = buf[i];
         if (c == '\n') {
@@ -70,11 +70,11 @@ void write(const char* buf, size_t count) {
 }
 
 void putc(char c) {
-    write(&c, 1);
+    fb_write(&c, 1);
 }
 
 void puts(const char* str) {
-    write(str, strlen(str));
+    fb_write(str, strlen(str));
     putc('\n');
 }
 
@@ -109,7 +109,7 @@ void printf(const char* fmt, ...) {
     while (1) {
         if (fmt[idx] == '%' || !fmt[idx]) {
             // print buffered stuff
-            write(fmt, idx);
+            fb_write(fmt, idx);
             if (!fmt[idx]) break;
             fmt += idx;
             idx = 0;
@@ -145,7 +145,7 @@ look_at_type:
                 }
             } else if (type == 's') {
                 const char* str = va_arg(args, const char*);
-                write(str, strlen(str));
+                fb_write(str, strlen(str));
             } else if (type == 'c') {
                 putc((char) va_arg(args, int));  // apparently %c takes int and turns it into char
             } else if (type == '%') {

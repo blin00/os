@@ -61,7 +61,7 @@ static void handle_irq(uint8_t irq) {
         ack_irq(irq);
     } else if (irq == 1) {
         uint8_t sc = inb(0x60);
-        on_scancode(sc);
+        kbd_on_scancode(sc);
         rand_on_kbd();
         ack_irq(irq);
     } else if (irq == 8) {
@@ -138,5 +138,7 @@ void interrupt_handler(uint32_t interrupt, register_state_t* cpu, stack_state_t*
         handle_irq(interrupt - 0x20);
     } else if (interrupt == 0x30) {
         printf("got int 0x30\n");
+    } else {
+        printf("got unknown int 0x%hhx\n", interrupt);
     }
 }
