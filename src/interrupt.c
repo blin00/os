@@ -4,9 +4,10 @@
 #include "io.h"
 #include "keyboard.h"
 #include "interrupt.h"
+#include "thread.h"
 
 static void ack_irq(uint8_t irq);
-static void handle_irq(uint8_t irq);
+static bool handle_irq(uint8_t irq);
 void build_idt(void);
 
 volatile uint32_t pit_ticks;    // not 64 bit because changed often + don't care about rollover
@@ -55,7 +56,8 @@ static void ack_irq(uint8_t irq) {
     outb(PIC1_CMD, PIC_EOI);
 }
 
-static void handle_irq(uint8_t irq) {
+static bool handle_irq(uint8_t irq) {
+    bool yield = false;
     if (irq == 0) {
         pit_ticks++;
         ack_irq(irq);
@@ -69,12 +71,14 @@ static void handle_irq(uint8_t irq) {
         rand_on_rtc();
         outb(0x70, 0x0c);
         inb(0x71);
+        yield = true;
         ack_irq(irq);
     } else if (irq == 7 || irq == 15) {
         // spurious - acknowledge only master PIC if needed
         if (irq == 15) ack_irq(7);
         spurious_irq_count++;
     }
+    return yield;
 }
 
 void int_init(void) {
@@ -120,6 +124,7 @@ void int_init(void) {
 }
 
 void interrupt_handler(uint32_t interrupt, register_state_t* cpu, stack_state_t* stack) {
+    bool yield = false;
     if (interrupt < 32) {
         // uh oh
         if (interrupt != 3) {
@@ -135,10 +140,29 @@ void interrupt_handler(uint32_t interrupt, register_state_t* cpu, stack_state_t*
         }
         return;
     } else if (interrupt >= 0x20 && interrupt <= 0x2f) {
-        handle_irq(interrupt - 0x20);
+        yield = handle_irq(interrupt - 0x20);
     } else if (interrupt == 0x30) {
         printf("got int 0x30\n");
     } else {
         printf("got unknown int 0x%hhx\n", interrupt);
     }
+    if (yield) thread_yield();
+}
+
+bool int_disable(void) {
+    return int_set(false);
+}
+
+bool int_enable(void) {
+    return int_set(true);
+}
+
+bool int_set(bool val) {
+    bool old = int_state();
+    if (val) {
+        asm volatile("sti");
+    } else {
+        asm volatile("cli");
+    }
+    return old;
 }

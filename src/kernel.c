@@ -88,12 +88,10 @@ void kmain(uint32_t magic, multiboot_info_t* mb_info, uint32_t kernel_start, uin
     int_init();
     thread_init();
     BOCHS_BREAK;
-    asm volatile("sti");
-    /*
+    int_enable();
     printf("gathering entropy...\n");
     while (rand_data(NULL, 0)) {
         asm volatile("hlt");
     }
-    */
     shell();
 }

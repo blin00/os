@@ -47,10 +47,11 @@ void shell_cmd(const char* cmd) {
         printf("spurious irq count: %lu\n", spurious_irq_count);
         printf("rdtsc: 0x%lx\n", __builtin_ia32_rdtsc());
     } else if (!strcmp(cmd, "test")) {
-        thread_create(test, NULL);
+        thread_create(test, (void*) 42);
     } else if (!strcmp(cmd, "yield")) {
         thread_yield();
-    } else {
+    } else if (strcmp(cmd, "")) {
+        // not empty
         printf("unknown cmd \"%s\"\n", cmd);
     }
 }

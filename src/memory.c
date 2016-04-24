@@ -4,6 +4,7 @@
 #include "io.h"
 #include "string.h"
 #include "memory.h"
+#include "interrupt.h"
 
 static __attribute__((aligned(4096))) uint32_t pdt[1024];
 static const size_t header_len = sizeof(malloc_header_t);
@@ -23,7 +24,9 @@ void* malloc(size_t size) {
     if (!size) return NULL;
     // round size up to 4 byte alignment
     if (size & 0b11) size = (size & ~0b11) + 4;
+    bool old = int_disable();
     malloc_header_t* ptr = head;
+    uint8_t* result = NULL;
     while (ptr) {
         if (!ptr->used && ptr->length >= size) {
             if (size + header_len <= ptr->length) {
@@ -36,14 +39,17 @@ void* malloc(size_t size) {
                 ptr->length = size;
             }
             ptr->used = true;
-            return (uint8_t*) ptr + header_len;
+            result = (uint8_t*) ptr + header_len;
+            break;
         } else ptr = ptr->next;
     }
-    return NULL;
+    int_set(old);
+    return result;
 }
 
 void free(void* ptr) {
     if (!ptr) return;
+    bool old = int_disable();
     malloc_header_t* entry = (malloc_header_t*) ((uint8_t*) ptr - header_len);
     entry->used = false;
     // merge adjacent blocks
@@ -56,6 +62,7 @@ void free(void* ptr) {
         entry->prev->length += header_len + entry->length;
         entry->prev->next = entry->next;
     }
+    int_set(old);
 }
 
 void* calloc(size_t num, size_t size) {

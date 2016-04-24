@@ -25,6 +25,7 @@ global build_idt
 global idt
 global _triple_fault
 global disable_apic
+global int_state
 
 extern interrupt_handler
 
@@ -78,6 +79,13 @@ disable_apic:
     rdmsr
     and eax, ~(1 << 11)
     wrmsr
+    ret
+
+int_state:
+    pushfd
+    pop eax
+    shr eax, 9  ; get IF
+    and eax, 1
     ret
 
 section .data

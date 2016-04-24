@@ -2,6 +2,7 @@
 #define INTERRUPT_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define ICW1_ICW4 0x01    /* ICW4 (not) needed */
 #define ICW1_SINGLE 0x02    /* Single (cascade) mode */
@@ -62,6 +63,10 @@ extern volatile uint64_t rtc_ticks;
 extern volatile uint64_t spurious_irq_count;
 
 void int_init(void);
+bool int_state(void);
+bool int_disable(void);
+bool int_enable(void);
+bool int_set(bool val);
 void _triple_fault(void);
 void disable_apic(void);
 
