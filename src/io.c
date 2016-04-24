@@ -53,7 +53,7 @@ void fb_write(const char* buf, size_t count) {
             }
             _putc(row * WIDTH + col, ' ');
         } else if (c == '\t') {
-            putc(' ');
+            fb_write("    ", 4 - col % 4);
         } else {
             _putc(row * WIDTH + col, c);
             if (++col >= WIDTH) {
