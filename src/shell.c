@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+
 #include "io.h"
 #include "util.h"
 #include "string.h"
@@ -9,6 +10,7 @@
 #include "keyboard.h"
 #include "interrupt.h"
 #include "thread.h"
+#include "synch.h"
 #include "shell.h"
 
 void shell_prompt(void) {
@@ -17,6 +19,11 @@ void shell_prompt(void) {
 
 void test(void* arg) {
     printf("hi! %u\n", (uint32_t) arg);
+    uint8_t buf[4242];
+    while (true) {
+        rand_data(buf, 4242);
+        thread_yield();
+    }
 }
 
 void shell_cmd(const char* cmd) {
@@ -64,7 +71,7 @@ void shell(void) {
     buf[0] = '\0';
     shell_prompt();
     while (1) {
-        asm volatile("hlt");
+        //asm volatile("hlt");
         sc = kbd_get_keycode();
         if (sc != -1) {
             char c = (kbd_get_shift() ? kbd_ascii_map_shift : kbd_ascii_map)[sc];

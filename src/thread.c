@@ -1,30 +1,64 @@
 #include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
 
 #include "memory.h"
-#include "thread.h"
 #include "list.h"
 #include "interrupt.h"
+#include "thread.h"
 
 list_t thread_ready_list;
 thread_t* thread_cur;   // not in ready list
+thread_t* thread_idle;
+
+static void thread_idle_proc(void);
 
 // initialize the threading system
-void thread_init(void) {
+thread_t* thread_init(void) {
     list_init(&thread_ready_list);
     thread_t* t = malloc(sizeof(thread_t));
-    t->dead = false;
+    t->state = READY;
     thread_cur = t;
+    thread_idle = thread_create(thread_idle_proc, NULL);
+    return t;
+}
+
+thread_t* thread_create(void* entry_point, void* arg) {
+    const size_t stack_size = 0x4000;
+    thread_t* t = malloc(sizeof(thread_t));
+    uint8_t* stack = malloc(stack_size);
+    uint32_t* esp = (uint32_t*) (stack + stack_size);
+    esp--; *esp = (uint32_t) arg;
+    esp--; *esp = (uint32_t) thread_exit;
+    esp--; *esp = (uint32_t) entry_point;
+    esp--; *esp = (uint32_t) _thread_entry;
+    t->esp = (uint32_t) esp;
+    t->stack_base = (uint32_t) stack;
+    t->state = READY;
+    bool old = int_disable();
+    list_push_back(&thread_ready_list, &t->entry);
+    int_set(old);
+    return t;
+}
+
+static void thread_idle_proc() {
+    while (true) {
+        thread_block();
+        asm volatile("hlt");
+    }
 }
 
 void thread_yield(void) {
     bool old = int_disable();
     thread_t* prev = NULL;
-    if (!thread_cur->dead)
+    if (thread_cur != thread_idle && thread_cur->state == READY)
         list_push_back(&thread_ready_list, &thread_cur->entry);
-    // assume there's always a thread ready to run
-    list_entry_t* entry_next = thread_ready_list.head.next;
-    list_remove(entry_next);
-    thread_t* to = container_of(entry_next, thread_t, entry);
+    thread_t* to;
+    if (list_is_empty(&thread_ready_list)) {
+        to = thread_idle;
+    } else {
+        to = container_of(list_pop_front(&thread_ready_list), thread_t, entry);
+    }
     thread_t* from = thread_cur;
     if (from != to) {
         thread_cur = to;
@@ -37,30 +71,27 @@ void thread_yield(void) {
 }
 
 void thread_yield_finish(thread_t* prev) {
-    if (prev && prev->dead) {
+    if (prev && prev->state == DEAD) {
         free((void*) prev->stack_base);
         free(prev);
     }
 }
 
-void thread_create(void* entry_point, void* arg) {
-    const size_t stack_size = 0x1000;
-    thread_t* t = malloc(sizeof(thread_t));
-    uint8_t* stack = malloc(stack_size);
-    uint32_t* esp = (uint32_t*) (stack + stack_size);
-    esp--; *esp = (uint32_t) arg;
-    esp--; *esp = (uint32_t) thread_exit;
-    esp--; *esp = (uint32_t) entry_point;
-    esp--; *esp = (uint32_t) _thread_entry;
-    t->esp = (uint32_t) esp;
-    t->stack_base = (uint32_t) stack;
-    t->dead = false;
+void thread_block() {
     bool old = int_disable();
-    list_push_back(&thread_ready_list, &t->entry);
+    thread_cur->state = BLOCKED;
+    thread_yield();
+    int_set(old);
+}
+
+void thread_unblock(thread_t* thread) {
+    bool old = int_disable();
+    thread->state = READY;
+    list_push_back(&thread_ready_list, &thread->entry);
     int_set(old);
 }
 
 void thread_exit(void) {
-    thread_cur->dead = true;
+    thread_cur->state = DEAD;
     thread_yield();
 }

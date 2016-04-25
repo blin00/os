@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "list.h"
 
@@ -7,6 +8,10 @@ void list_init(list_t* list) {
     list->head.next = &list->tail;
     list->tail.prev = &list->head;
     list->tail.next = NULL;
+}
+
+bool list_is_empty(list_t* list) {
+    return list->head.next == &list->tail;
 }
 
 void list_push_front(list_t* list, list_entry_t* entry) {
@@ -23,6 +28,18 @@ void list_push_back(list_t* list, list_entry_t* entry) {
     entry->next = &list->tail;
     old_back->next = entry;
     list->tail.prev = entry;
+}
+
+list_entry_t* list_pop_front(list_t* list) {
+    list_entry_t* front = list->head.next;
+    list_remove(front);
+    return front;
+}
+
+list_entry_t* list_pop_back(list_t* list) {
+    list_entry_t* back = list->tail.prev;
+    list_remove(back);
+    return back;
 }
 
 void list_remove(list_entry_t* entry) {

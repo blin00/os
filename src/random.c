@@ -1,3 +1,6 @@
+/*
+    Implementation of the Fortuna CSPRNG from https://www.schneier.com/cryptography/paperfiles/fortuna.pdf
+*/
 #include <cpuid.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -6,6 +9,7 @@
 #include "util.h"
 #include "sha256.h"
 #include "interrupt.h"
+#include "synch.h"
 #include "random.h"
 
 static inline void inc_counter(void);
@@ -18,7 +22,7 @@ static void rand_rdtsc(void);
 static fortuna_prng_t prng_state;
 static bool has_rdrand = false;
 static bool has_rdseed = false;
-static volatile bool pool_lock = false; // only interrupt safe - once there are threads, this doesn't work anymore
+static semaphore_t rand_sema;
 
 static inline void inc_counter(void) {
     prng_state.gen.counter.l++;
@@ -35,6 +39,33 @@ void rand_init(void) {
     for (size_t i = 0; i < 32; i++) {
         sha256_init(&prng_state.pools[i].ctx);
     }
+    sema_init(&rand_sema, 1);
+}
+
+/* Returns 0 on success, 1 on failure (before enough entropy for first seed). */
+int rand_data(void* out, size_t bytes) {
+    static uint32_t last_reseed = 0;
+    uint8_t buf[32 * 32];
+    sema_down(&rand_sema);
+    if (prng_state.pools[0].len >= 64 && rtc_ticks - last_reseed >= 7) {
+        last_reseed = rtc_ticks;
+        prng_state.reseeds++;
+        size_t len = 0;
+        for (size_t i = 0; i < 32; i++) {
+            if (prng_state.reseeds | (1 << i)) {
+                sha256_final(&prng_state.pools[i].ctx, &buf[len]);
+                sha256_init(&prng_state.pools[i].ctx);
+                prng_state.pools[i].len = 0;
+                len += 32;
+            }
+        }
+        rand_reseed(buf, len);
+    }
+    int result = 1;
+    if (prng_state.reseeds)
+        result = rand_gen_data((uint8_t*) out, bytes);
+    sema_up(&rand_sema);
+    return result;
 }
 
 static void rand_reseed(uint8_t* seed, size_t length) {
@@ -72,60 +103,16 @@ static int rand_gen_data(uint8_t* out, size_t bytes) {
     return 0;
 }
 
-int rand_data(void* out, size_t bytes) {
-    static uint32_t last_reseed = 0;
-    uint8_t buf[32 * 32];
-    if (prng_state.pools[0].len >= 64 && rtc_ticks - last_reseed >= 7) {
-        pool_lock = true;
-        last_reseed = rtc_ticks;
-        prng_state.reseeds++;
-        size_t len = 0;
-        for (size_t i = 0; i < 32; i++) {
-            if (prng_state.reseeds | (1 << i)) {
-                sha256_final(&prng_state.pools[i].ctx, &buf[len]);
-                sha256_init(&prng_state.pools[i].ctx);
-                prng_state.pools[i].len = 0;
-                len += 32;
-            }
-        }
-        rand_reseed(buf, len);
-        pool_lock = false;
-    }
-    if (!prng_state.reseeds) return 1;
-    return rand_gen_data((uint8_t*) out, bytes);
-}
-
 void rand_add_random_event(void* data, uint8_t length, uint8_t source, uint8_t pool) {
-    if (pool_lock || length < 1 || length > 32 || pool > 31) return;
+    if (length < 1 || length > 32 || pool > 31) return;
+    if (!sema_try_down(&rand_sema)) return;
     uint8_t header[2];
     header[0] = source;
     header[1] = length;
     sha256_update(&prng_state.pools[pool].ctx, header, 2);
     sha256_update(&prng_state.pools[pool].ctx, (uint8_t*) data, length);
     prng_state.pools[pool].len += length;
-}
-
-static void rand_rdseed(void) {
-    static uint8_t pool = 0;
-    uint32_t seed;
-    if (has_rdseed) {
-        if (_rdseed(&seed)) {
-            rand_add_random_event(&seed, sizeof(seed), 2, pool);
-            pool = (pool + 1) % 32;
-        }
-    } else if (has_rdrand) {
-        if (_rdrand(&seed)) {
-            rand_add_random_event(&seed, sizeof(seed), 2, pool);
-            pool = (pool + 1) % 32;
-        }
-    }
-}
-
-static void rand_rdtsc(void) {
-    static uint8_t pool = 0;
-    uint32_t t = (uint32_t) __builtin_ia32_rdtsc();
-    rand_add_random_event(&t, sizeof(t), 1, pool);
-    pool = (pool + 1) % 32;
+    sema_up(&rand_sema);
 }
 
 void rand_on_rtc(void) {
@@ -165,4 +152,27 @@ void rand_on_kbd(void) {
         num = 0;
         total = 0;
     }
+}
+
+static void rand_rdseed(void) {
+    static uint8_t pool = 0;
+    uint32_t seed;
+    if (has_rdseed) {
+        if (_rdseed(&seed)) {
+            rand_add_random_event(&seed, sizeof(seed), 2, pool);
+            pool = (pool + 1) % 32;
+        }
+    } else if (has_rdrand) {
+        if (_rdrand(&seed)) {
+            rand_add_random_event(&seed, sizeof(seed), 2, pool);
+            pool = (pool + 1) % 32;
+        }
+    }
+}
+
+static void rand_rdtsc(void) {
+    static uint8_t pool = 0;
+    uint32_t t = (uint32_t) __builtin_ia32_rdtsc();
+    rand_add_random_event(&t, sizeof(t), 1, pool);
+    pool = (pool + 1) % 32;
 }

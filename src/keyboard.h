@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+void kbd_init(void);
 void kbd_on_scancode(uint8_t sc);
 int kbd_get_keycode(void);
 bool kbd_get_shift(void);

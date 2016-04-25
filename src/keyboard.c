@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+
+#include "synch.h"
 #include "keyboard.h"
 
 // one slot is always open, so actual capacity is BUF_SIZE - 1
@@ -41,6 +43,11 @@ static bool rctrl = false;
 enum state { IDLE, E0, E1_0, E1_1 };
 
 static enum state kbd_state = IDLE;
+static semaphore_t kbd_sema;
+
+void kbd_init() {
+    sema_init(&kbd_sema, 0);
+}
 
 // safe to call from interrupt handler
 void kbd_on_scancode(uint8_t sc) {
@@ -69,11 +76,13 @@ static int kbd_add_scancode(uint8_t sc) {
     if (start == new_end) return 1;
     buf[end] = sc;
     end = new_end;
+    sema_up(&kbd_sema);
     return 0;
 }
 
 int kbd_get_keycode(void) {
-    if (start == end) return -1;
+    //if (start == end) return -1;
+    sema_down(&kbd_sema);
     uint8_t result = buf[start];
     start = (start + 1) % BUF_SIZE;
     if ((result & 0x7f) == 0x2a) lshift = !(result & 0x80);

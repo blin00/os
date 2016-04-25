@@ -4,15 +4,17 @@
 #include "io.h"
 #include "string.h"
 #include "memory.h"
-#include "interrupt.h"
+#include "synch.h"
 
 static __attribute__((aligned(4096))) uint32_t pdt[1024];
 static const size_t header_len = sizeof(malloc_header_t);
 static malloc_header_t* head = NULL;
+static semaphore_t mem_sema;
 
 // current limitation: can only add one contiguous block of memory to the heap
 void mem_init(void* ptr, size_t size) {
     if (head || size < header_len) return;
+    sema_init(&mem_sema, 1);
     head = (malloc_header_t*) ptr;
     head->prev = head->next = NULL;
     head->used = false;
@@ -24,7 +26,7 @@ void* malloc(size_t size) {
     if (!size) return NULL;
     // round size up to 4 byte alignment
     if (size & 0b11) size = (size & ~0b11) + 4;
-    bool old = int_disable();
+    sema_down(&mem_sema);
     malloc_header_t* ptr = head;
     uint8_t* result = NULL;
     while (ptr) {
@@ -43,26 +45,34 @@ void* malloc(size_t size) {
             break;
         } else ptr = ptr->next;
     }
-    int_set(old);
+    sema_up(&mem_sema);
     return result;
 }
 
 void free(void* ptr) {
     if (!ptr) return;
-    bool old = int_disable();
+    sema_down(&mem_sema);
     malloc_header_t* entry = (malloc_header_t*) ((uint8_t*) ptr - header_len);
     entry->used = false;
     // merge adjacent blocks
     // assumes that two adjacent blocks are right after each other in memory
     if (entry->next && !entry->next->used) {
+        printf("merge forward\n");
         entry->length += header_len + entry->next->length;
         entry->next = entry->next->next;
+        if (entry->next) {
+            entry->next->prev = entry;
+        }
     }
     if (entry->prev && !entry->prev->used) {
+        printf("merge back\n");
         entry->prev->length += header_len + entry->length;
         entry->prev->next = entry->next;
+        if (entry->next) {
+            entry->next->prev = entry->prev;
+        }
     }
-    int_set(old);
+    sema_up(&mem_sema);
 }
 
 void* calloc(size_t num, size_t size) {
@@ -89,8 +99,11 @@ void dump_heap(void) {
     if (!ptr) {
         printf("no entries\n");
     } else {
+        malloc_header_t* last = NULL;
         while (ptr) {
             printf("entry: 0x%x, length: 0x%x%s\n", (uint32_t) ptr, ptr->length, ptr->used ? " (*)" : "");
+            if (ptr->prev != last) printf("invalid back ptr to 0x%x\n", (uint32_t) ptr->prev);
+            last = ptr;
             ptr = ptr->next;
         }
     }

@@ -1,4 +1,6 @@
 #include <stdint.h>
+
+#include "keyboard.h"
 #include "multiboot.h"
 #include "io.h"
 #include "util.h"
@@ -85,6 +87,7 @@ void kmain(uint32_t magic, multiboot_info_t* mb_info, uint32_t kernel_start, uin
             rand_add_random_event((uint8_t*) name, len > 32 ? 32 : len, 255, 0);
         }
     }
+    kbd_init();
     int_init();
     thread_init();
     BOCHS_BREAK;
