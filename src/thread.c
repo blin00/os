@@ -24,14 +24,14 @@ thread_t* thread_init(void) {
 }
 
 thread_t* thread_create(void* entry_point, void* arg) {
-    const size_t stack_size = 0x4000;
+    const size_t stack_size = 0x4000;   // TODO: figure out why we need so much stack
     thread_t* t = malloc(sizeof(thread_t));
     uint8_t* stack = malloc(stack_size);
     uint32_t* esp = (uint32_t*) (stack + stack_size);
-    esp--; *esp = (uint32_t) arg;
-    esp--; *esp = (uint32_t) thread_exit;
-    esp--; *esp = (uint32_t) entry_point;
-    esp--; *esp = (uint32_t) _thread_entry;
+    esp--; *esp = (uint32_t) arg;           // argument for entry_point
+    esp--; *esp = (uint32_t) thread_exit;   // return address for entry_point
+    esp--; *esp = (uint32_t) entry_point;   // return address for _thread_entry
+    esp--; *esp = (uint32_t) _thread_entry; // return for _thread_switch
     t->esp = (uint32_t) esp;
     t->stack_base = (uint32_t) stack;
     t->state = READY;

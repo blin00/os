@@ -3,9 +3,10 @@ global _thread_entry
 
 extern thread_yield_finish
 
+; thread_t* _thread_switch(thread_t* from, thread_t* to)
 _thread_switch:
     mov ecx, [esp + 4]  ; from
-    mov eax, ecx
+    mov eax, ecx        ; return from
     mov [ecx + 8], esp
     mov [ecx + 12], ebx
     mov [ecx + 16], esi
@@ -20,9 +21,12 @@ _thread_switch:
     ret
 
 ; entry point of all newly created threads
+; void _thread_entry(void)
 _thread_entry:
-    ; eax holds return value of _thread_switch: the previous thread
+    ; this function is only reached through _thread_switch when a new thread is switched to,
+    ; so eax always holds return value of _thread_switch: the previous thread
     push eax
+    ; pass it to thread_yield_finish
     call thread_yield_finish
     ; interrupts are disabled up until here
     sti

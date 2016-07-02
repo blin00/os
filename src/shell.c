@@ -70,8 +70,7 @@ void shell(void) {
     char buf[BUFFER_LEN + 1];
     buf[0] = '\0';
     shell_prompt();
-    while (1) {
-        //asm volatile("hlt");
+    while (true) {
         sc = kbd_get_keycode();
         if (sc != -1) {
             char c = (kbd_get_shift() ? kbd_ascii_map_shift : kbd_ascii_map)[sc];

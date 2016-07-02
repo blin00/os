@@ -88,7 +88,7 @@ void int_init(void) {
     spurious_irq_count = 0;
     // make IDT
     build_idt();
-    // disable APIC
+    // disable APIC to avoid loads of spurious irqs on real hardware
     unsigned int eax, ebx, ecx, edx;
     if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
         if (edx & (1 << 9)) {

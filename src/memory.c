@@ -57,7 +57,6 @@ void free(void* ptr) {
     // merge adjacent blocks
     // assumes that two adjacent blocks are right after each other in memory
     if (entry->next && !entry->next->used) {
-        printf("merge forward\n");
         entry->length += header_len + entry->next->length;
         entry->next = entry->next->next;
         if (entry->next) {
@@ -65,7 +64,6 @@ void free(void* ptr) {
         }
     }
     if (entry->prev && !entry->prev->used) {
-        printf("merge back\n");
         entry->prev->length += header_len + entry->length;
         entry->prev->next = entry->next;
         if (entry->next) {

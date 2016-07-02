@@ -43,7 +43,7 @@ static bool rctrl = false;
 enum state { IDLE, E0, E1_0, E1_1 };
 
 static enum state kbd_state = IDLE;
-static semaphore_t kbd_sema;
+static semaphore_t kbd_sema;    // number of keys in buffer
 
 void kbd_init() {
     sema_init(&kbd_sema, 0);

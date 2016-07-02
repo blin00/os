@@ -1,5 +1,6 @@
 /*
-    Implementation of the Fortuna CSPRNG from https://www.schneier.com/cryptography/paperfiles/fortuna.pdf
+    Implementation of the Fortuna CSPRNG
+    from https://www.schneier.com/cryptography/paperfiles/fortuna.pdf
 */
 #include <cpuid.h>
 #include <stdint.h>
