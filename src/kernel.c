@@ -11,29 +11,31 @@
 #include "thread.h"
 #include "shell.h"
 
+// probably want to actually run this on each boot
 /*
 #include "sha256.h"
-#include "aes.h"
+#include "ctaes.h"
+
 void test_crypto() {
     uint8_t result[32];
     const char* test = "test string 123";
     const uint8_t key[] = {0x60,0x3d,0xeb,0x10,0x15,0xca,0x71,0xbe,0x2b,0x73,0xae,0xf0,0x85,0x7d,0x77,0x81,0x1f,0x35,0x2c,0x07,0x3b,0x61,0x08,0xd7,0x2d,0x98,0x10,0xa3,0x09,0x14,0xdf,0xf4};
-    uint32_t key_exp[60];
     const uint8_t p1[] = {0x6b,0xc1,0xbe,0xe2,0x2e,0x40,0x9f,0x96,0xe9,0x3d,0x7e,0x11,0x73,0x93,0x17,0x2a};
 
-    SHA256_CTX ctx;
-    sha256_init(&ctx);
-    sha256_update(&ctx, (const uint8_t*) test, strlen(test));
-    sha256_update(&ctx, (const uint8_t*) "5", 1);
-    sha256_final(&ctx, result);
+    SHA256_CTX sha_ctx;
+    sha256_init(&sha_ctx);
+    sha256_update(&sha_ctx, (const uint8_t*) test, strlen(test));
+    sha256_update(&sha_ctx, (const uint8_t*) "5", 1);
+    sha256_final(&sha_ctx, result);
     putbytes(result, 32);
     putc('\n');
 
-    aes_key_setup(key, key_exp, 256);
-    aes_encrypt(p1, result, key_exp, 256);
+    AES256_ctx aes_ctx;
+    AES256_init(&aes_ctx, key);
+    AES256_encrypt(&aes_ctx, 1, result, p1);
     putbytes(result, 16);
     putc('\n');
-    aes_decrypt(result, result, key_exp, 256);
+    AES256_decrypt(&aes_ctx, 1, result, result);
     putbytes(result, 16);
     putc('\n');
 }
@@ -50,6 +52,7 @@ void kmain(uint32_t magic, multiboot_info_t* mb_info, uint32_t kernel_start, uin
         vbe_mode_info_t* vbe_info = (vbe_mode_info_t*) mb_info->vbe_mode_info;
         printf("graphics: %ux%u @0x%x\n", vbe_info->XResolution, vbe_info->YResolution, vbe_info->PhysBasePtr);
         if (vbe_info->ModeAttributes & (1 << 4)) {
+            // if in some graphical mode, this will probably set some pixels in the upper left corner
             *(uint32_t*) (vbe_info->PhysBasePtr) = 0xffffffff;
         }
     }
@@ -81,6 +84,7 @@ void kmain(uint32_t magic, multiboot_info_t* mb_info, uint32_t kernel_start, uin
     mem_init((void*) free_start, free_end - free_start + 1);
     rand_init();
     if (mb_info->flags & (1 << 9)) {
+        // add bootloader name as a tiny bit of entropy
         char* name = (char*) mb_info->boot_loader_name;
         size_t len = strlen(name);
         if (len > 0) {

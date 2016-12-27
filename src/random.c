@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include "string.h"
 #include "util.h"
+#include "ctaes.h"
 #include "sha256.h"
 #include "interrupt.h"
 #include "synch.h"
@@ -80,10 +81,10 @@ static void rand_reseed(uint8_t* seed, size_t length) {
 
 static int rand_generate_blocks(uint8_t* out, size_t blocks) {
     if (prng_state.gen.counter.l == 0 && prng_state.gen.counter.h == 0) return 1;
-    static uint32_t key_setup[60];
-    aes_key_setup(prng_state.gen.key, key_setup, 256);
+    static AES256_ctx aes_ctx;
+    AES256_init(&aes_ctx, prng_state.gen.key);
     for (size_t i = 0; i < blocks; i++) {
-        aes_encrypt(prng_state.gen.counter_bytes, out + i * 16, key_setup, 256);
+        AES256_encrypt(&aes_ctx, 1, out + i * 16, prng_state.gen.counter_bytes);
         inc_counter();
     }
     return 0;

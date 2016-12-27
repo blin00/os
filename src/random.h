@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "aes.h"
 #include "sha256.h"
 
 struct fortuna_generator {
