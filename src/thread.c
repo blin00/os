@@ -24,7 +24,7 @@ thread_t* thread_init(void) {
 }
 
 thread_t* thread_create(void* entry_point, void* arg) {
-    const size_t stack_size = 0x4000;   // TODO: figure out why we need so much stack
+    const size_t stack_size = 0x1000;
     thread_t* t = malloc(sizeof(thread_t));
     uint8_t* stack = malloc(stack_size);
     uint32_t* esp = (uint32_t*) (stack + stack_size);

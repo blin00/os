@@ -19,7 +19,7 @@ void shell_prompt(void) {
 
 void test(void* arg) {
     printf("hi! %u\n", (uint32_t) arg);
-    uint8_t buf[4242];
+    uint8_t* buf = malloc(4242);
     while (true) {
         rand_data(buf, 4242);
         thread_yield();

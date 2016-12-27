@@ -46,7 +46,7 @@ void rand_init(void) {
 /* Returns 0 on success, 1 on failure (before enough entropy for first seed). */
 int rand_data(void* out, size_t bytes) {
     static uint32_t last_reseed = 0;
-    uint8_t buf[32 * 32];
+    static uint8_t buf[32 * 32];
     sema_down(&rand_sema);
     if (prng_state.pools[0].len >= 64 && rtc_ticks - last_reseed >= 7) {
         last_reseed = rtc_ticks;
@@ -80,7 +80,7 @@ static void rand_reseed(uint8_t* seed, size_t length) {
 
 static int rand_generate_blocks(uint8_t* out, size_t blocks) {
     if (prng_state.gen.counter.l == 0 && prng_state.gen.counter.h == 0) return 1;
-    uint32_t key_setup[60];
+    static uint32_t key_setup[60];
     aes_key_setup(prng_state.gen.key, key_setup, 256);
     for (size_t i = 0; i < blocks; i++) {
         aes_encrypt(prng_state.gen.counter_bytes, out + i * 16, key_setup, 256);
