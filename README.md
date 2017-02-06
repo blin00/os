@@ -1,5 +1,7 @@
 Unnamed 32-bit protected mode OS under development.
 
+Binaries available at https://keybase.pub/blin00/os/
+
 ## Build Requirements
 * i686-elf toolchain
     * See http://wiki.osdev.org/GCC_Cross-Compiler
