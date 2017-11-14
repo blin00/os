@@ -3,9 +3,9 @@ ASM_SRCS=$(wildcard src/*.s)
 OBJECTS=$(C_SRCS:.c=.o) $(ASM_SRCS:.s=.o)
 DEPS=$(patsubst src/%.c,dep/%.d,$(C_SRCS))
 CC=i686-elf-gcc
-CFLAGS=-ffreestanding -fno-stack-protector -mpreferred-stack-boundary=2 -Wall -Wextra -O2 -pipe
+CFLAGS=-ffreestanding -mpreferred-stack-boundary=2 -Wall -Wextra -O2 -pipe
 LD=i686-elf-gcc
-LDFLAGS=-T link.ld -ffreestanding -nostdlib -lgcc -O2 -pipe
+LDFLAGS=-T link.ld -ffreestanding -nostdlib -lgcc -Wall -Wextra -O2 -pipe
 AS=nasm
 ASFLAGS=-f elf32
 

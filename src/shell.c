@@ -11,6 +11,7 @@
 #include "interrupt.h"
 #include "thread.h"
 #include "synch.h"
+#include "bip39.h"
 #include "shell.h"
 
 void shell_prompt(void) {
@@ -42,6 +43,10 @@ void shell_cmd(const char* cmd) {
         } else {
             printf("not enough entropy\n");
         }
+    } else if (!strcmp(cmd, "bip39")) {
+        char buf[108];  // words + spaces + null = 12 * 8 + 11 + 1 = 108
+        bip39_gen_mnemonic(buf, NULL);
+        printf("%s\n", buf);
     } else if (!strcmp(cmd, "alloc")) {
         malloc(0x10000);
     } else if (!strcmp(cmd, "page")) {

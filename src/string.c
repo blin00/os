@@ -18,6 +18,17 @@ int strcmp(const char* s1, const char* s2) {
     return 0;
 }
 
+char* strcpy(char* dst, const char* src) {
+    while ((*dst++ = *src++));
+    return dst;
+}
+
+char* strcat(char* dst, const char* src) {
+    while (*dst) dst++;
+    while ((*dst++ = *src++));
+    return dst;
+}
+
 void* memset(void* ptr, int value, size_t size) {
     unsigned char* buf = (unsigned char*) ptr;
     for (size_t i = 0; i < size; i++) {
